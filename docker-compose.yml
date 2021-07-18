@@ -1,0 +1,66 @@
+version: '3'
+
+services:
+    backend:
+        build: ./backend
+        container_name: nestjs-docker
+        command: npm start --watch
+        # ports:
+        #     - "3000:3000"
+        environment:
+            URL_DB: 'postgres://ft_transcendence:42@postgres:5432/ft_transcendence'
+        volumes:
+            - ./backend/src:/usr/src/app/backend/src
+        depends_on:
+            - postgres
+        restart: unless-stopped
+        stdin_open: true
+        tty: true
+        networks:
+            - realworld-docker-network
+      
+
+    frontend:
+        build: ./frontend
+        container_name: vue-docker
+        # ports:
+        #     - "8080:8080"
+        restart: unless-stopped
+        command: npm run serve
+        stdin_open: true
+        tty: true
+        volumes:
+            - ./frontend/src:/usr/src/app/frontend/src
+        networks:
+            - realworld-docker-network
+          
+
+    nginx:
+        image: nginx:stable-alpine
+        container_name: nginx-docker
+        ports:
+            - "80:80"
+        volumes:
+            - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+        depends_on:
+            - backend
+            - frontend
+            - postgres
+        networks:
+            - realworld-docker-network
+
+    postgres:
+        image: postgres:10.4
+        # ports:
+        #     - "35000:5432"
+        environment:
+            POSTGRES_USER: ft_transcendence
+            POSTGRES_PASSWORD: '42'
+            POSTGRES_DB: ft_transcendence
+        networks:
+            - realworld-docker-network
+          
+
+networks:
+    realworld-docker-network:
+        driver: bridge
