@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, OneToMany, BeforeInsert } from 'typeorm'
 import { hash } from 'bcrypt'
+import { UserEntity } from 'src/user/user.entity'
 
 @Entity({name: 'conversation'})
 export class ConversationEntity {
@@ -25,12 +26,11 @@ export class ConversationEntity {
         }
     }
 
-    // @ManyToMany(() => UserEntity, (user) => user.chats)
-    // @JoinTable()
-    // users: UserEntity[]
+    @ManyToMany(() => UserEntity, user => user.conversations)
+    users: UserEntity[]
 
-    @Column('int', {array: true, default: []})
-    usersId: number[]
+    // @Column('int', {array: true, default: []})
+    // usersId: number[]
 
     // @ManyToMany(() => UserEntity, (user) => user.blackListChats)
     // @JoinTable()

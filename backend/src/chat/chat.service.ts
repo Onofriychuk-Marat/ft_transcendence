@@ -16,10 +16,10 @@ export class ChatService {
         private readonly userRepository: Repository<UserEntity>
     ) {}
 
-    async watchUserConversations(user: UserEntity): Promise<ChatType[]> {
+    watchUserConversations(user: UserEntity): ChatType[] {
         const chats: ChatType[] = []
-        for (let i = 0; i < user.conversationsId.length; i++) {
-            const conversation = await this.conversationRepository.findOne(user.conversationsId[i])
+        
+        user.conversations.map(conversation => {
             chats.push({
                 id: conversation.id,
                 name: conversation.conversationName,
@@ -27,14 +27,14 @@ export class ChatService {
                 numberOfMissed: 0,
                 status: 'online'
             })
-        }
+        })
         return chats
     }
 
-    async watchUserFriends(user: UserEntity): Promise<ChatType[]> {
+    watchUserFriends(user: UserEntity): ChatType[] {
         const chats: ChatType[] = []
-        for (let i = 0; i < user.friendsId.length; i++) {
-            const friend = await this.userRepository.findOne(user.friendsId[i])
+
+        user.friends.map(friend => {
             chats.push({
                 id: friend.id,
                 name: friend.username,
@@ -42,7 +42,7 @@ export class ChatService {
                 numberOfMissed: 0,
                 status: 'online'
             })
-        }
+        })
         return chats
     }
 

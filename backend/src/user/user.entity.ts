@@ -1,5 +1,6 @@
 import { JoinTable, Column, PrimaryGeneratedColumn, Entity, BeforeInsert, ManyToMany, OneToMany } from 'typeorm'
 import { hash } from 'bcrypt'
+import { ConversationEntity } from 'src/conversation/conversation.entity'
 
 @Entity({name: 'users'})
 export class UserEntity {
@@ -9,7 +10,7 @@ export class UserEntity {
     @Column()
     username: string
 
-    @Column({select: false})
+    @Column()
     password: string
 
     @BeforeInsert()
@@ -44,12 +45,12 @@ export class UserEntity {
     @Column({default: 0})
     bestWin: number
 
-    // @ManyToMany(() => ChatEntity, (chat) => chat.users)
-    // @JoinTable()
-    // chats: ChatEntity[]
+    @ManyToMany(() => ConversationEntity, conversation => conversation.users)
+    @JoinTable()
+    conversations: ConversationEntity[]
 
-    @Column('int', {array: true, default: []})
-    conversationsId: number[]
+    // @Column('int', {array: true, default: []})
+    // conversationsId: number[]
 
     // @ManyToMany(() => ChatEntity, (chat) => chat.blackListUsers)
     // @JoinTable()
@@ -58,12 +59,12 @@ export class UserEntity {
     // @Column('int', {array: true, default: []})
     // blackListchats: number[]
 
-    // @ManyToMany(() => UserEntity)
-    // @JoinTable()
-    // friends: UserEntity[]
+    @ManyToMany(() => UserEntity, user => user.friends)
+    @JoinTable()
+    friends: UserEntity[]
 
-    @Column('int', {array: true, default: []})
-    friendsId: number[]
+    // @Column('int', {array: true, default: []})
+    // friendsId: number[]
 
     // @ManyToMany(() => UserEntity, (user) => user.blackListUsers)
     // @JoinTable()

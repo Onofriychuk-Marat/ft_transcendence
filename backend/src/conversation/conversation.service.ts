@@ -30,11 +30,17 @@ export class ConversationService {
         let newConversation = new ConversationEntity()
         Object.assign(newConversation, createConversationDto)
         newConversation.idAdmin = adminConversation.id
-        newConversation.usersId = [adminConversation.id]
+        console.log('flag1')
+        newConversation.users = [adminConversation]
+        console.log('flag2')
         newConversation = await this.conversationReposity.save(newConversation)
-        adminConversation.conversationsId.push(newConversation.id)
+        console.log('flag3')
+        adminConversation.conversations.push(newConversation)
+        console.log('flag4')
         await this.userRepository.save(adminConversation)
+        console.log('flag5')
         console.log('adminGroup: ', adminConversation)
+        console.log('flag6')
         return newConversation
     }
 
@@ -51,11 +57,13 @@ export class ConversationService {
     }
 
     async findById(idConversation: number): Promise<ConversationEntity> {
-        return await this.conversationReposity.findOne(idConversation)
+        return await this.conversationReposity.findOne(idConversation, {
+            relations: ['users']
+        })
     }
 
     getTypeConversation(user: UserEntity, conversation: ConversationEntity): 'chat' | 'chatOpen' | 'chatBlocked' {
-        const isMyConversation = user.conversationsId.findIndex(id => id == conversation.id) !== -1
+        const isMyConversation = user.conversations.findIndex(conversationItem => conversationItem.id == conversation.id) !== -1
         if (isMyConversation) {
             return 'chat'
         }
@@ -68,7 +76,7 @@ export class ConversationService {
 
     buildConversationResponse(conversation: ConversationEntity): ConversationResponseInterface {
         delete conversation.idAdmin
-        delete conversation.usersId
+        delete conversation.users
         delete conversation.accessCode
         delete conversation.blackListUsersId
         return {

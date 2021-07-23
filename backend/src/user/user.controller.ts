@@ -13,42 +13,40 @@ import { MyProfileResponseInterface } from './types/myProfileResponse.interface'
 import { WorldService } from 'src/world/world.service'
 import { UserProfileResponseInterface } from './types/userProfileResponse.interface'
 
-@Controller()
+@Controller('user')
 export class UserController {
     constructor(private userService: UserService) {}
 
-    @Post('/user/registration')
+    @Post('registration')
     @UsePipes(new ValidationPipe())
     async registration(@Body('user') createUserDto: CreateUserDto): Promise<UserResponseInterface> {
         const user = await this.userService.registration(createUserDto)
-        console.log('New USER', user)
         return this.userService.buildUserResponse(user)
     }
 
-    @Post('/user/login')
+    @Post('login')
     async login(@Body('user') loginUserDto: LoginUserDto): Promise<UserResponseInterface> {
         const user = await this.userService.login(loginUserDto)
         return this.userService.buildUserResponse(user)
     }
 
-    @Get('/user')
+    @Get('profile')
     @UseGuards(AuthGuard)
     async watchProfile(@User() user: UserEntity): Promise<MyProfileResponseInterface> {
         return this.userService.buildMyProfileResponse(user)
     }
 
-    @Get('/user/settings')
+    @Get('settings')
     @UseGuards(AuthGuard)
     async watchSettings(@User() user: UserEntity): Promise<SettingsResponseInterface> {
         return this.userService.buildSettingsUserResponse(user)
     }
 
-    @Put('/user/settings')
+    @Put('settings')
     @UseGuards(AuthGuard)
     @UsePipes(new ValidationPipe())
     async updateSettings(@User() user: UserEntity, @Body('user') userDto: UpdateUserDto): Promise<SettingsResponseInterface> {
         const updatedUser = await this.userService.updateSettingsUser(user, userDto)
         return this.userService.buildSettingsUserResponse(updatedUser)
     }
-
 }

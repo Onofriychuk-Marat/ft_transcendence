@@ -28,8 +28,8 @@ export class WorldService {
     }
 
     async enterConveration(user: UserEntity, conversation: ConversationEntity) {
-        user.conversationsId.push(conversation.id)
-        conversation.usersId.push(user.id)
+        user.conversations.push(conversation)
+        conversation.users.push(user)
         this.userRepository.save(user)
         this.conversationRepository.save(conversation)
     }
@@ -50,15 +50,15 @@ export class WorldService {
     }
 
     async addUserToFriends(user: UserEntity, selectUser: UserEntity) {
-        const isFriend = user.friendsId.findIndex(id => id === selectUser.id) !== -1
+        const isFriend = user.friends.findIndex(friend => friend.id === selectUser.id) !== -1
         const isBlackList = selectUser.blackListUsersId.findIndex(id => id === user.id) !== -1
         if (isFriend || isBlackList) {
             return 
         }
         const isSelectedUserSentRequest = user.userFriendRequestId.findIndex(id => id === selectUser.id) !== -1
         if (isSelectedUserSentRequest) {
-            user.friendsId.push(selectUser.id)
-            selectUser.friendsId.push(user.id)
+            user.friends.push(selectUser)
+            selectUser.friends.push(user)
             let index = user.userFriendRequestId.indexOf(selectUser.id)
             user.userFriendRequestId.splice(index, 1)
             index = selectUser.myFriendshipRequestsId.indexOf(user.id)
@@ -72,7 +72,7 @@ export class WorldService {
     }
 
     async removeUserAsFriends(user: UserEntity, selectUser: UserEntity) {
-        const isFriend = user.friendsId.findIndex(id => id === selectUser.id) !== -1
+        const isFriend = user.friends.findIndex(frind => frind.id === selectUser.id) !== -1
         const isBlackList = selectUser.blackListUsersId.findIndex(id => id === user.id) !== -1
         if (!isFriend || isBlackList) {
             return 
@@ -123,18 +123,13 @@ export class WorldService {
         }
     }
 
-    async buildUserProfileResponse(user: UserEntity, idOfSelectedUser: number): UserProfileResponseInterface {
+    async buildUserProfileResponse(user: UserEntity, idOfSelectedUser: number): Promise<UserProfileResponseInterface> {
         const typeUserInQuestion = await this.userService.getTypeUser(user, idOfSelectedUser)
         delete user.password
-        delete user.conversationsId
-        delete user.friendsId     
-        delete user.blackListUsersId
-        delete user.userFriendRequestId
-        delete user.myFriendshipRequestsId
         return {
             profile: {
                 ...user,
-                type: type
+                type: typeUserInQuestion
             }
         }
     }

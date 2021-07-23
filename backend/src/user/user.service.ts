@@ -41,9 +41,12 @@ export class UserService {
     }
 
     async login(loginUserDto: LoginUserDto): Promise<UserEntity> {
+        // const user = await this.userRepository.findOne({
+        //     username: loginUserDto.username
+        // }, { select: ['id', 'username', 'image', 'password'] })
         const user = await this.userRepository.findOne({
             username: loginUserDto.username
-        }, { select: ['id', 'username', 'image', 'password'] })
+        })
         if (!user) {
             throw new HttpException({
                 errors: {
@@ -80,11 +83,15 @@ export class UserService {
     }
 
     async findById(id: number): Promise<UserEntity> {
-        return await this.userRepository.findOne(id, { 
-            select: ['id', 'username', 'image', 'countGames', 'countWin', 'countLose',
-                    'bestWinStreak', 'rating', 'minimalRating', 'maximumRating', 'bestWin',
-                    'conversationsId', 'friendsId', 'blackListUsersId', 'userFriendRequestId',
-                    'myFriendshipRequestsId'] 
+        // return await this.userRepository.findOne(id, { 
+        //     select: ['id', 'username', 'image', 'countGames', 'countWin', 'countLose',
+        //             'bestWinStreak', 'rating', 'minimalRating', 'maximumRating', 'bestWin',
+        //             'conversationsId', 'friendsId', 'blackListUsersId', 'userFriendRequestId',
+        //             'myFriendshipRequestsId'],
+        //     relations: ['conversations'] 
+        // })
+        return this.userRepository.findOne(id, { 
+            relations: ['conversations'] 
         })
     }
 
@@ -96,7 +103,7 @@ export class UserService {
     }
 
     getTypeUser(user: UserEntity, idFriend: number): 'friend' | 'user' | 'userBlocked' {
-        const isFriend = user.friendsId.findIndex((id) => id === user.id) !== -1
+        const isFriend = user.friends.findIndex(friend => friend.id === user.id) !== -1
         if (isFriend) {
             return 'friend'
         }
@@ -121,11 +128,6 @@ export class UserService {
 
     buildMyProfileResponse(user: UserEntity): MyProfileResponseInterface {
         delete user.password
-        delete user.conversationsId
-        delete user.friendsId        
-        delete user.blackListUsersId
-        delete user.userFriendRequestId
-        delete user.myFriendshipRequestsId
         return {
             profile: user
         }

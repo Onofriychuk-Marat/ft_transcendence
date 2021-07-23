@@ -23,7 +23,7 @@ export class ChatController {
 
     @Get('friends')
     @UseGuards(AuthGuard)
-    async watchUserFriends(@User() user: UserEntity) {
+    async watchUserFriends(@User() user: UserEntity): Promise<ChatsResponseInterface> {
         const friends = await this.chatService.watchUserFriends(user)
         return this.chatService.buildChatsResponse(friends)
     }
@@ -32,7 +32,9 @@ export class ChatController {
     markFriendAsRead() {}
 
     @Get('conversations/:idConversation/users')
-    async watchUsersConservetion(){
+    @UseGuards(AuthGuard)
+    async watchUsersConservetion(@User() user: UserEntity, @Param('idConversation') idConversation: number) {
+        const conversation = await this.conversationService.findById(idConversation)
 
     }
 
