@@ -1,0 +1,1 @@
+export type userRelationshipType = 'friend' | 'user' | 'userBlocked' | 'sentFriendRequest' | 'acceptedFriendRequest'

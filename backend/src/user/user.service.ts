@@ -9,8 +9,10 @@ import { UserResponseInterface } from './types/userResponse.interface'
 import { LoginUserDto } from './dto/loginUserDto'
 import { compare, hash } from 'bcrypt'
 import { UserType } from './types/user.types'
-import { SettingsResponseInterface } from './types/userSettings.interface'
+import { SettingsResponseInterface } from './types/settingsResponse.interface'
 import { UpdateUserDto } from './dto/updateUserDto'
+import { MyProfileResponseInterface } from './types/myProfileResponse.interface'
+import { UserProfileResponseInterface } from './types/userProfileResponse.interface'
 
 @Injectable()
 export class UserService {
@@ -32,6 +34,9 @@ export class UserService {
         }
         const newUser = new UserEntity()
         Object.assign(newUser, createUserDto)
+        // newUser.chats = []
+        // newUser.blackListChats = []
+        // newUser.blackListUsers = []
         return await this.userRepository.save(newUser)
     }
 
@@ -53,7 +58,7 @@ export class UserService {
         if (!isPasswordCorrect) {
             throw new HttpException({
                 errors: {
-                    'password': 'is invalid'
+                    password: 'is invalid'
                 }
             }, HttpStatus.UNPROCESSABLE_ENTITY)
         }
@@ -77,7 +82,9 @@ export class UserService {
     async findById(id: number): Promise<UserEntity> {
         return await this.userRepository.findOne(id, { 
             select: ['id', 'username', 'image', 'countGames', 'countWin', 'countLose',
-                    'bestWinStreak', 'rating', 'minimalRating', 'maximumRating', 'bestWin'] 
+                    'bestWinStreak', 'rating', 'minimalRating', 'maximumRating', 'bestWin',
+                    'conversationsId', 'friendsId', 'blackListUsersId', 'userFriendRequestId',
+                    'myFriendshipRequestsId'] 
         })
     }
 
@@ -88,8 +95,19 @@ export class UserService {
         }, JWT_SECRET)
     }
 
+    getTypeUser(user: UserEntity, idFriend: number): 'friend' | 'user' | 'userBlocked' {
+        const isFriend = user.friendsId.findIndex((id) => id === user.id) !== -1
+        if (isFriend) {
+            return 'friend'
+        }
+        const isUserBlocked = user.blackListUsersId.findIndex((id) => id === user.id) !== -1
+        if (isUserBlocked) {
+            return 'userBlocked'
+        }
+        return 'user'
+    }
+
     buildUserResponse(user: UserEntity): UserResponseInterface {
-        delete user.password
         return {
             user: {
                 id: user.id,
@@ -101,9 +119,16 @@ export class UserService {
         }
     }
 
-    buildProfileResponse(user: UserEntity): UserType {
+    buildMyProfileResponse(user: UserEntity): MyProfileResponseInterface {
         delete user.password
-        return user
+        delete user.conversationsId
+        delete user.friendsId        
+        delete user.blackListUsersId
+        delete user.userFriendRequestId
+        delete user.myFriendshipRequestsId
+        return {
+            profile: user
+        }
     }
 
     buildSettingsUserResponse(user: UserEntity): SettingsResponseInterface {

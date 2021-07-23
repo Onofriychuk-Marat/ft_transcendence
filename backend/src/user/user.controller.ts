@@ -1,4 +1,4 @@
-import { Controller, Post, Put, Get, Body, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common'
+import { Controller, Post, Put, Get, Body, Param, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common'
 import { User } from './decorators/user.decorator'
 import { CreateUserDto } from './dto/createUserDto'
 import { LoginUserDto } from './dto/loginUserDto'
@@ -6,9 +6,12 @@ import { UpdateUserDto } from './dto/updateUserDto'
 import { AuthGuard } from './guards/auth.quard'
 import { UserType } from './types/user.types'
 import { UserResponseInterface } from './types/userResponse.interface'
-import { SettingsResponseInterface } from './types/userSettings.interface'
+import { SettingsResponseInterface } from './types/settingsResponse.interface'
 import { UserEntity } from './user.entity'
 import { UserService } from './user.service'
+import { MyProfileResponseInterface } from './types/myProfileResponse.interface'
+import { WorldService } from 'src/world/world.service'
+import { UserProfileResponseInterface } from './types/userProfileResponse.interface'
 
 @Controller()
 export class UserController {
@@ -18,6 +21,7 @@ export class UserController {
     @UsePipes(new ValidationPipe())
     async registration(@Body('user') createUserDto: CreateUserDto): Promise<UserResponseInterface> {
         const user = await this.userService.registration(createUserDto)
+        console.log('New USER', user)
         return this.userService.buildUserResponse(user)
     }
 
@@ -29,8 +33,8 @@ export class UserController {
 
     @Get('/user')
     @UseGuards(AuthGuard)
-    async watchProfile(@User() user: UserEntity): Promise<UserType> {
-        return this.userService.buildProfileResponse(user)
+    async watchProfile(@User() user: UserEntity): Promise<MyProfileResponseInterface> {
+        return this.userService.buildMyProfileResponse(user)
     }
 
     @Get('/user/settings')
@@ -47,28 +51,4 @@ export class UserController {
         return this.userService.buildSettingsUserResponse(updatedUser)
     }
 
-    @Get('/users/:id')
-    async watchSelectProfile() {
-
-    }
-
-    @Post('/users/:id/blocked')
-    async blockedUser() {
-
-    }
-
-    @Post('/users/:id/unblocked')
-    async unblockedUser() {
-
-    }
-
-    @Post('/users/:id/add')
-    async addAsFriend() {
-
-    }
-
-    @Post('/users/:id/delete')
-    async removeFromFriends() {
-
-    }
 }

@@ -1,6 +1,6 @@
 import { IsNotEmpty } from 'class-validator'
 
-export class CreateBlockInformationDto {
+export class CreateDescriptionSiteDto {
     @IsNotEmpty()
     readonly title: string
 

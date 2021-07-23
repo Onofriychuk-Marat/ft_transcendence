@@ -5,8 +5,8 @@ services:
         build: ./backend
         container_name: nestjs-docker
         command: npm start --watch
-        # ports:
-        #     - "3000:3000"
+        ports:
+            - "3000:3000"
         environment:
             URL_DB: 'postgres://ft_transcendence:42@postgres:5432/ft_transcendence'
         volumes:

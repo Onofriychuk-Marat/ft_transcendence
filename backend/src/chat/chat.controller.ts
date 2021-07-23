@@ -1,34 +1,55 @@
-import { Controller, Post, Get, UseGuards, Body, UsePipes, ValidationPipe } from '@nestjs/common'
+import { Controller, Post, Get, UseGuards, Param, Body, UsePipes, ValidationPipe } from '@nestjs/common'
 import { ChatService } from './chat.service'
 import { AuthGuard } from 'src/user/guards/auth.quard'
-import { CreateChatDto } from './dto/createChatDto'
-import { ChatResponseInterface } from './types/chatResponse.interface'
 import { User } from 'src/user/decorators/user.decorator'
 import { ChatsResponseInterface } from './types/chatsResponse.interface'
+import { UserEntity } from 'src/user/user.entity'
+import { password } from 'src/configuration'
+import { ConversationResponseInterface } from 'src/conversation/types/conversationResponse.interface'
+import { ConversationService } from 'src/conversation/conversation.service'
 
-@Controller()
+@Controller('chats')
 export class ChatController {
-    constructor(private chatService: ChatService) {}
+    constructor(private chatService: ChatService,
+                private conversationService: ConversationService) {}
+    // constructor(private chatService: ChatService) {}
 
-    @Post('/chat/create')
+    @Get('conversations')
     @UseGuards(AuthGuard)
-    @UsePipes(new ValidationPipe())
-    async createChat(@Body('chat') createChatDto: CreateChatDto, @User('id') idAdmin: number): Promise<ChatResponseInterface> {
-        return this.chatService.createChat(createChatDto, idAdmin)
+    async watchUserConversations(@User() user: UserEntity): Promise<ChatsResponseInterface> {
+        const conversations = await this.chatService.watchUserConversations(user)
+        return this.chatService.buildChatsResponse(conversations)
     }
 
-    @Get('/chats')
+    @Get('friends')
     @UseGuards(AuthGuard)
-    async watchAllChats(): Promise<ChatsResponseInterface> {
-        return this.chatService.watchAllChats()
+    async watchUserFriends(@User() user: UserEntity) {
+        const friends = await this.chatService.watchUserFriends(user)
+        return this.chatService.buildChatsResponse(friends)
     }
 
-    @Get('/chats/:chatID/users')
-    watchChatUsers() {}
+    @Post('friends/:idFriend/check')
+    markFriendAsRead() {}
 
-    @Post('/chats/:chatID/:userID/leave')
+    @Get('conversations/:idConversation/users')
+    async watchUsersConservetion(){
+
+    }
+
+    @Post('conversations/:idConversation/password')
+    @UseGuards(AuthGuard)
+    async setPasssord(@Body('accessCode') accessCode: number | undefined,
+                        @User('idUser') idUser: number, @Param('idConversation') idConversation: number): Promise<ConversationResponseInterface> {
+        const chat = await this.conversationService.setAcessCodeForConversation(accessCode, idUser, idConversation)
+        return this.conversationService.buildConversationResponse(chat)
+    }
+
+    @Post('conversations/:idConversation/leave')
+    leaveConversation() {}
+
+    @Post('conversations/:idConversation/:userID/leave')
     kickUserOutOfChat() {}
 
-    @Post('chats/:chatID/check')
+    @Post('conversations/:idConversation/check')
     markChatAsRead() {}
 }

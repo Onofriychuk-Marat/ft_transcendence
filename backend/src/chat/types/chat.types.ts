@@ -1,6 +1,6 @@
 export type ChatType = {
     id: number,
-    chatName: string,
+    name: string,
     image: string,
     numberOfMissed: number,
     status: 'online' | 'offline'

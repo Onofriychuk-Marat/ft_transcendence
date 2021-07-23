@@ -1,60 +1,63 @@
 import { Injectable, HttpStatus, HttpException } from '@nestjs/common'
-import { ChatEntity } from './chat.entity'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
-import { CreateChatDto } from './dto/createChatDto'
-import { ChatResponseInterface } from './types/chatResponse.interface'
 import { ChatsResponseInterface } from './types/chatsResponse.interface'
+import { UserEntity } from 'src/user/user.entity'
+import { ConversationEntity } from 'src/conversation/conversation.entity'
 import { ChatType } from './types/chat.types'
 
 
 @Injectable()
 export class ChatService {
     constructor(
-        @InjectRepository(ChatEntity)
-        private readonly chatRepository: Repository<ChatEntity>
+        @InjectRepository(ConversationEntity)
+        private readonly conversationRepository: Repository<ConversationEntity>,
+        @InjectRepository(UserEntity)
+        private readonly userRepository: Repository<UserEntity>
     ) {}
 
-    async createChat(createChatDto: CreateChatDto, idAdmin: number): Promise<ChatResponseInterface> {
-        const chat = await this.chatRepository.findOne({
-            chatName: createChatDto.chatName
-        })
-        if (chat) {
-            throw new HttpException({
-                errors: {
-                    chatName: 'has already been taken'
-                }
-            }, HttpStatus.UNPROCESSABLE_ENTITY)
-        }
-        const newChat = new ChatEntity()
-        Object.assign(newChat, createChatDto)
-        newChat.idAdmin = idAdmin
-        await this.chatRepository.save(newChat)
-        return {
-            chat: {
-                id: newChat.id,
-                chatName: newChat.chatName,
-                image: newChat.image,
+    async watchUserConversations(user: UserEntity): Promise<ChatType[]> {
+        const chats: ChatType[] = []
+        for (let i = 0; i < user.conversationsId.length; i++) {
+            const conversation = await this.conversationRepository.findOne(user.conversationsId[i])
+            chats.push({
+                id: conversation.id,
+                name: conversation.conversationName,
+                image: conversation.image,
                 numberOfMissed: 0,
                 status: 'online'
-            }
+            })
         }
+        return chats
     }
 
-    async watchAllChats(): Promise<ChatsResponseInterface> {
+    async watchUserFriends(user: UserEntity): Promise<ChatType[]> {
+        const chats: ChatType[] = []
+        for (let i = 0; i < user.friendsId.length; i++) {
+            const friend = await this.userRepository.findOne(user.friendsId[i])
+            chats.push({
+                id: friend.id,
+                name: friend.username,
+                image: friend.image,
+                numberOfMissed: 0,
+                status: 'online'
+            })
+        }
+        return chats
+    }
 
-        const chats: ChatType[] = (await this.chatRepository.find()).map((chatEntity) => {
+    buildChatsResponse(chats: ChatType[]): ChatsResponseInterface {
+        const chatsResponse = chats.map((chatEntity) => {
             return {
                 id: chatEntity.id,
-                chatName: chatEntity.chatName,
+                name: chatEntity.name,
                 image: chatEntity.image,
                 numberOfMissed: 0,
                 status: 'online' as 'online'
             }
         })
-        console.log('chats', chats)
         return {
-            chats: chats
+            chats: chatsResponse
         }
     }
 }
