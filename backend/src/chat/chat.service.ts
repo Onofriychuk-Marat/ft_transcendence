@@ -1,22 +1,22 @@
 import { Injectable, HttpStatus, HttpException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
-import { ChatsResponseInterface } from './types/chatsResponse.interface'
+import { ChatsResponseInterface } from './interfaces/chatsResponse.interface'
 import { UserEntity } from 'src/user/user.entity'
 import { ConversationEntity } from 'src/conversation/conversation.entity'
-import { ChatType } from './types/chat.types'
-
+import { ChatType } from './types/chat.type'
+import { UserService } from 'src/user/user.service'
+import { ConversationService } from 'src/conversation/conversation.service'
+import { ChatResponseInterface } from './interfaces/chatResponse.interface'
 
 @Injectable()
 export class ChatService {
     constructor(
-        @InjectRepository(ConversationEntity)
-        private readonly conversationRepository: Repository<ConversationEntity>,
-        @InjectRepository(UserEntity)
-        private readonly userRepository: Repository<UserEntity>
+        private userService: UserService,
+        private conversationService: ConversationService
     ) {}
 
-    watchUserConversations(user: UserEntity): ChatType[] {
+    getUserConversations(user: UserEntity): ChatType[] {
         const chats: ChatType[] = []
         
         user.conversations.map(conversation => {
@@ -25,13 +25,14 @@ export class ChatService {
                 name: conversation.conversationName,
                 image: conversation.image,
                 numberOfMissed: 0,
-                status: 'online'
+                status: 'online',
+                type: this.conversationService.getTypeConversation(user, conversation)
             })
         })
         return chats
     }
 
-    watchUserFriends(user: UserEntity): ChatType[] {
+    getUserFriends(user: UserEntity): ChatType[] {
         const chats: ChatType[] = []
 
         user.friends.map(friend => {
@@ -40,24 +41,41 @@ export class ChatService {
                 name: friend.username,
                 image: friend.image,
                 numberOfMissed: 0,
-                status: 'online'
+                status: 'online',
+                type: this.userService.getTypeUser(user, friend)
+            })
+        })
+        return chats
+    }
+
+    getUsersConversation(user: UserEntity, conversation: ConversationEntity): ChatType[] {
+        const chats: ChatType[] = []
+
+        conversation.users.map(userConversation => {
+            if (userConversation.id == user.id) {
+                return
+            }
+            chats.push({
+                id: userConversation.id,
+                name: userConversation.username,
+                image: userConversation.image,
+                status: 'online',
+                numberOfMissed: 0,
+                type: this.userService.getTypeUser(user, userConversation)
             })
         })
         return chats
     }
 
     buildChatsResponse(chats: ChatType[]): ChatsResponseInterface {
-        const chatsResponse = chats.map((chatEntity) => {
-            return {
-                id: chatEntity.id,
-                name: chatEntity.name,
-                image: chatEntity.image,
-                numberOfMissed: 0,
-                status: 'online' as 'online'
-            }
-        })
         return {
-            chats: chatsResponse
+            chats: chats
+        }
+    }
+
+    buildChatResponse(chat: ChatType): ChatResponseInterface {
+        return {
+            chat: chat
         }
     }
 }

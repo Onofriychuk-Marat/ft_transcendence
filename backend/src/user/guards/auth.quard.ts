@@ -1,4 +1,4 @@
-import { RequestWithUser } from "src/types/requestWithUser.interface";
+import { RequestWithUser } from "src/interfaces/requestWithUser.interface";
 import {
     CanActivate,
     ExecutionContext,

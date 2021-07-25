@@ -5,14 +5,16 @@ import { Repository } from 'typeorm'
 import { CreateUserDto } from './dto/createUserDto'
 import { sign } from 'jsonwebtoken'
 import { JWT_SECRET } from 'src/ormconfig'
-import { UserResponseInterface } from './types/userResponse.interface'
+import { UserResponseInterface } from './interfaces/userResponse.interface'
 import { LoginUserDto } from './dto/loginUserDto'
 import { compare, hash } from 'bcrypt'
-import { UserType } from './types/user.types'
-import { SettingsResponseInterface } from './types/settingsResponse.interface'
+import { UserType } from './types/user.type'
 import { UpdateUserDto } from './dto/updateUserDto'
-import { MyProfileResponseInterface } from './types/myProfileResponse.interface'
-import { UserProfileResponseInterface } from './types/userProfileResponse.interface'
+import { TypeUserType } from 'src/chat/types/typeUser.type'
+import { ProfileType } from './types/profile.type'
+import { ProfileResponseInterface } from './interfaces/profileResponse.interface'
+import { ProfileSelectUserType } from './types/profileSelectUser.type'
+import { ProfileSelectUserResponseInterface } from './interfaces/profileSelectUserResponse.interface'
 
 @Injectable()
 export class UserService {
@@ -34,16 +36,10 @@ export class UserService {
         }
         const newUser = new UserEntity()
         Object.assign(newUser, createUserDto)
-        // newUser.chats = []
-        // newUser.blackListChats = []
-        // newUser.blackListUsers = []
         return await this.userRepository.save(newUser)
     }
 
     async login(loginUserDto: LoginUserDto): Promise<UserEntity> {
-        // const user = await this.userRepository.findOne({
-        //     username: loginUserDto.username
-        // }, { select: ['id', 'username', 'image', 'password'] })
         const user = await this.userRepository.findOne({
             username: loginUserDto.username
         })
@@ -69,7 +65,6 @@ export class UserService {
     }
 
     async updateSettingsUser(user: UserEntity, updateUserDto: UpdateUserDto): Promise<UserEntity> {
-        
         if (updateUserDto.username) {
             user.username = updateUserDto.username
         }
@@ -83,16 +78,13 @@ export class UserService {
     }
 
     async findById(id: number): Promise<UserEntity> {
-        // return await this.userRepository.findOne(id, { 
-        //     select: ['id', 'username', 'image', 'countGames', 'countWin', 'countLose',
-        //             'bestWinStreak', 'rating', 'minimalRating', 'maximumRating', 'bestWin',
-        //             'conversationsId', 'friendsId', 'blackListUsersId', 'userFriendRequestId',
-        //             'myFriendshipRequestsId'],
-        //     relations: ['conversations'] 
-        // })
         return this.userRepository.findOne(id, { 
-            relations: ['conversations'] 
+            relations: ['conversations', 'friends', 'blackListUsers', 'friendInvitation', 'myFriendshipRequests'] 
         })
+    }
+
+    async findAll(): Promise<UserEntity[]> {
+        return this.userRepository.find()
     }
 
     generateJwt(user: UserEntity): string {
@@ -102,44 +94,66 @@ export class UserService {
         }, JWT_SECRET)
     }
 
-    getTypeUser(user: UserEntity, idFriend: number): 'friend' | 'user' | 'userBlocked' {
-        const isFriend = user.friends.findIndex(friend => friend.id === user.id) !== -1
+    getTypeUser(user: UserEntity, selectUser: UserEntity): TypeUserType  {
+        const isFriend = user.friends.findIndex(friend => friend.id === selectUser.id) !== -1
         if (isFriend) {
             return 'friend'
         }
-        const isUserBlocked = user.blackListUsersId.findIndex((id) => id === user.id) !== -1
+        const isUserBlocked = user.blackListUsers.findIndex(userItem => userItem.id === selectUser.id) !== -1
         if (isUserBlocked) {
             return 'userBlocked'
+        }
+        const isFriendInvitation = user.friendInvitation.findIndex(userItem => userItem.id == selectUser.id) !== -1
+        if (isFriendInvitation) {
+            return 'friendInvitation'
+        }
+        const isFriendshipRequest = user.myFriendshipRequests.findIndex(userItem => userItem.id === selectUser.id) !== -1
+        if (isFriendshipRequest) {
+            return 'friendshipRequest'
         }
         return 'user'
     }
 
-    buildUserResponse(user: UserEntity): UserResponseInterface {
+    getUser(userEntity: UserEntity): UserType {
+        delete userEntity.password
+        delete userEntity.conversations
+        delete userEntity.friends
+        delete userEntity.blackListUsers
+        delete userEntity.friendInvitation
+        delete userEntity.myFriendshipRequests
         return {
-            user: {
-                id: user.id,
-                username: user.username,
-                image: user.image,
-                token: this.generateJwt(user)
-            }
-            
+            ...userEntity,
+            token: this.generateJwt(userEntity)
         }
     }
 
-    buildMyProfileResponse(user: UserEntity): MyProfileResponseInterface {
-        delete user.password
+    getProfile(userEntity: UserEntity): ProfileType {
+        delete userEntity.password
+        delete userEntity.conversations
+        delete userEntity.friends
+        delete userEntity.blackListUsers
+        delete userEntity.friendInvitation
+        delete userEntity.myFriendshipRequests
         return {
-            profile: user
+            ...userEntity
         }
     }
 
-    buildSettingsUserResponse(user: UserEntity): SettingsResponseInterface {
+    buildUserResponse(user: UserType): UserResponseInterface {
         return {
-            user: {
-                id: user.id,
-                username: user.username,
-                image: user.image
-            }
+            user: user
+        }
+    }
+
+    buildProfileResponse(profile: ProfileType): ProfileResponseInterface {
+        return {
+            profile: profile
+        }
+    }
+
+    buildProfileSelectUserResponse(profile: ProfileSelectUserType): ProfileSelectUserResponseInterface {
+        return {
+            profileSelectUser: profile
         }
     }
 }

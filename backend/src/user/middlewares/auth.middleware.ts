@@ -1,5 +1,5 @@
 import { JWT_SECRET } from "src/ormconfig"
-import { RequestWithUser } from "src/types/requestWithUser.interface"
+import { RequestWithUser } from "src/interfaces/requestWithUser.interface"
 import { Injectable, NestMiddleware } from '@nestjs/common'
 import { NextFunction, Response } from 'express'
 import { verify } from 'jsonwebtoken'

@@ -1,9 +1,9 @@
-import { EtherType } from "./types/ether.types";
+import { EtherType } from "./types/ether.type";
 
 
 export class EthersService {
 
-    async watchAllEthers(): Promise<EtherType[]> {
+    async getAllEthers(): Promise<EtherType[]> {
         return [
             {
                 id: 123,
@@ -30,5 +30,11 @@ export class EthersService {
                 numberOfWatching: 14
             }
         ]
+    }
+
+    buildEthersResponse(ethers: EtherType[]) {
+        return {
+            ethers: ethers
+        }
     }
 }

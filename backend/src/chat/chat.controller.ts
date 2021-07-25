@@ -1,57 +1,88 @@
-import { Controller, Post, Get, UseGuards, Param, Body, UsePipes, ValidationPipe } from '@nestjs/common'
+import { Controller, Delete, Post, Get, UseGuards, Param, Body, UsePipes, ValidationPipe } from '@nestjs/common'
 import { ChatService } from './chat.service'
 import { AuthGuard } from 'src/user/guards/auth.quard'
 import { User } from 'src/user/decorators/user.decorator'
-import { ChatsResponseInterface } from './types/chatsResponse.interface'
+import { ChatsResponseInterface } from './interfaces/chatsResponse.interface'
 import { UserEntity } from 'src/user/user.entity'
 import { password } from 'src/configuration'
-import { ConversationResponseInterface } from 'src/conversation/types/conversationResponse.interface'
 import { ConversationService } from 'src/conversation/conversation.service'
+import { UserService } from 'src/user/user.service'
+import { ChatResponseInterface } from './interfaces/chatResponse.interface'
 
 @Controller('chats')
 export class ChatController {
     constructor(private chatService: ChatService,
-                private conversationService: ConversationService) {}
-    // constructor(private chatService: ChatService) {}
+                private conversationService: ConversationService,
+                private userService: UserService) {}
 
     @Get('conversations')
     @UseGuards(AuthGuard)
     async watchUserConversations(@User() user: UserEntity): Promise<ChatsResponseInterface> {
-        const conversations = await this.chatService.watchUserConversations(user)
+        const conversations = this.chatService.getUserConversations(user)
         return this.chatService.buildChatsResponse(conversations)
     }
 
     @Get('friends')
     @UseGuards(AuthGuard)
     async watchUserFriends(@User() user: UserEntity): Promise<ChatsResponseInterface> {
-        const friends = await this.chatService.watchUserFriends(user)
+        const friends = this.chatService.getUserFriends(user)
         return this.chatService.buildChatsResponse(friends)
     }
 
-    @Post('friends/:idFriend/check')
-    markFriendAsRead() {}
-
-    @Get('conversations/:idConversation/users')
+    @Get('conversations/:conversationID/users')
     @UseGuards(AuthGuard)
-    async watchUsersConservetion(@User() user: UserEntity, @Param('idConversation') idConversation: number) {
-        const conversation = await this.conversationService.findById(idConversation)
-
+    async watchUsersConversation(@User() user: UserEntity,
+                                @Param('conversationID') conversationID: number): Promise<ChatsResponseInterface> {
+        const conversation = await this.conversationService.findById(conversationID)
+        const users = this.chatService.getUsersConversation(user, conversation)
+        return this.chatService.buildChatsResponse(users)
     }
 
-    @Post('conversations/:idConversation/password')
+    @Post('conversations/:conversationID/accessCode/add')
     @UseGuards(AuthGuard)
-    async setPasssord(@Body('accessCode') accessCode: number | undefined,
-                        @User('idUser') idUser: number, @Param('idConversation') idConversation: number): Promise<ConversationResponseInterface> {
-        const chat = await this.conversationService.setAcessCodeForConversation(accessCode, idUser, idConversation)
-        return this.conversationService.buildConversationResponse(chat)
+    async setAccessCode(@Body('accessCode') accessCode: number | undefined,
+                        @User() user: UserEntity,
+                        @Param('conversationID') conversationID: number): Promise<ChatResponseInterface> {
+        let conversation = await this.conversationService.findById(conversationID)
+        conversation = await this.conversationService.setAcessCodeForConversation(accessCode, user, conversation)
+        const chat = this.conversationService.getConversation(user, conversation)
+        return this.chatService.buildChatResponse(chat)
     }
 
-    @Post('conversations/:idConversation/leave')
-    leaveConversation() {}
+    @Delete('conversations/:conversationID/accessCode/delete')
+    @UseGuards(AuthGuard)
+    async deleteAccessCode(@User() user: UserEntity,
+                            @Param('conversationID') conversationID: number): Promise<ChatResponseInterface> {
+        let conversation = await this.conversationService.findById(conversationID)
+        conversation = await this.conversationService.deleteAccessCodeForConversation(user, conversation)
+        const chat = this.conversationService.getConversation(user, conversation)
+        return this.chatService.buildChatResponse(chat)
+    }
 
-    @Post('conversations/:idConversation/:userID/leave')
-    kickUserOutOfChat() {}
+    @Post('conversations/:conversationID/leave')
+    @UseGuards(AuthGuard)
+    async leaveConversation(@User() user: UserEntity,
+                            @Param('conversationID') conversationID: number): Promise<ChatResponseInterface> {
+        let conversation = await this.conversationService.findById(conversationID)
+        conversation = await this.conversationService.leaveConversation(user, conversation)
+        const chat = this.conversationService.getConversation(user, conversation)
+        return this.chatService.buildChatResponse(chat)
+    }
 
-    @Post('conversations/:idConversation/check')
-    markChatAsRead() {}
+    @Post('conversations/:conversationID/users/:userID/leave')
+    async kickUserOutOfChat(@User() user: UserEntity,
+                        @Param('conversationID') conversationID: number,
+                        @Param('userID') selectUserID: number): Promise<ChatsResponseInterface> {
+        let conversation = await this.conversationService.findById(conversationID)
+        const selectUser = await this.userService.findById(selectUserID)
+        conversation = await this.conversationService.kickUserOutOfChat(user, selectUser, conversation)
+        const users = this.chatService.getUsersConversation(user, conversation)
+        return this.chatService.buildChatsResponse(users)
+    }
+
+    // @Post('conversations/:conversationID/check')
+    // markChatAsRead() {}
+
+    // @Post('friends/:idFriend/check')
+    // markFriendAsRead() {}
 }

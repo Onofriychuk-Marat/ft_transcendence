@@ -1,4 +1,4 @@
-import { ChatType } from "./chat.types";
+import { ChatType } from "../types/chat.type";
 
 export interface ChatsResponseInterface {
     chats: ChatType[]

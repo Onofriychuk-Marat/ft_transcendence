@@ -2,13 +2,12 @@ import {Injectable, HttpException, HttpStatus} from '@nestjs/common'
 import {InjectRepository} from '@nestjs/typeorm'
 import {Repository} from 'typeorm'
 import { UserEntity } from 'src/user/user.entity'
-import { WorldResponseInterface } from './types/worldResponse.interface'
-import { ElementWorldType } from './types/elementWorld.types'
-import { UserProfileResponseInterface } from 'src/user/types/userProfileResponse.interface'
 import { ConversationEntity } from 'src/conversation/conversation.entity'
+import { compare } from 'bcrypt'
+import { ProfileSelectUserType } from 'src/user/types/profileSelectUser.type'
+import { ChatType } from 'src/chat/types/chat.type'
 import { UserService } from 'src/user/user.service'
 import { ConversationService } from 'src/conversation/conversation.service'
-import { compare } from 'bcrypt'
 
 @Injectable()
 export class WorldService {
@@ -19,22 +18,75 @@ export class WorldService {
         private conversationService: ConversationService
     ) {}
 
-    async findAllPeople(): Promise<UserEntity[]> {
-        return await this.userRepository.find()
+    getChatsPeopleAndConversations(user: UserEntity, users: UserEntity[], conversations: ConversationEntity[]): ChatType[] {
+        const chats: ChatType[] = []
+
+        users.map(userItem => {
+            if (user.id == userItem.id) {
+                return
+            }
+            chats.push({
+                id: userItem.id,
+                name: userItem.username,
+                image: userItem.image,
+                numberOfMissed: 0,
+                status: 'online',
+                type: this.userService.getTypeUser(user, userItem)
+            })
+        })
+        conversations.map(conversation => {
+            chats.push({
+                id: conversation.id,
+                name: conversation.conversationName,
+                image: conversation.image,
+                numberOfMissed: 0,
+                status: 'online',
+                type: this.conversationService.getTypeConversation(user, conversation)
+            })
+        })
+        return chats
     }
 
-    async findAllConversations(): Promise<ConversationEntity[]> {
-        return await this.conversationRepository.find()
+    getChatConversation(user: UserEntity, conversation: ConversationEntity): ChatType {
+        const chat: ChatType = {
+            id: conversation.id,
+            name: conversation.conversationName,
+            image: conversation.image,
+            numberOfMissed: 0,
+            status: 'online',
+            type: this.conversationService.getTypeConversation(user, conversation)
+        }
+        return chat
     }
 
-    async enterConveration(user: UserEntity, conversation: ConversationEntity) {
+    getProfileSelectUser(user: UserEntity, selectUser: UserEntity): ProfileSelectUserType {
+        const profile: ProfileSelectUserType = {
+            id: selectUser.id,
+            username: selectUser.username,
+            image: selectUser.image,
+            countGames: selectUser.countGames,
+            countWin: selectUser.countWin,
+            countLose: selectUser.countLose,
+            bestWinStreak: selectUser.bestWinStreak,
+            rating: selectUser.rating,
+            minimalRating: selectUser.minimalRating,
+            maximumRating: selectUser.maximumRating,
+            bestWin: selectUser.bestWin,
+            type: this.userService.getTypeUser(user, selectUser),
+            numberOfMissed: 0,
+            status: 'online'
+        }
+        return profile
+    }
+
+    async enterConveration(user: UserEntity, conversation: ConversationEntity): Promise<void> {
         user.conversations.push(conversation)
         conversation.users.push(user)
         this.userRepository.save(user)
         this.conversationRepository.save(conversation)
     }
 
-    async enterConversationWithAccessCode(user: UserEntity, conversation: ConversationEntity, accessCode: string) {
+    async enterConversationWithAccessCode(user: UserEntity, conversation: ConversationEntity, accessCode: string): Promise<void> {
         const isAccessCodeCorrect = await compare(
             accessCode,
             conversation.accessCode
@@ -49,88 +101,75 @@ export class WorldService {
         this.enterConveration(user, conversation)
     }
 
-    async addUserToFriends(user: UserEntity, selectUser: UserEntity) {
+    async addUserToFriends(user: UserEntity, selectUser: UserEntity): Promise<void> {
         const isFriend = user.friends.findIndex(friend => friend.id === selectUser.id) !== -1
-        const isBlackList = selectUser.blackListUsersId.findIndex(id => id === user.id) !== -1
+        const isBlackList = selectUser.blackListUsers.findIndex(userItem => userItem.id === user.id) !== -1
         if (isFriend || isBlackList) {
             return 
         }
-        const isSelectedUserSentRequest = user.userFriendRequestId.findIndex(id => id === selectUser.id) !== -1
+        const isSelectedUserSentRequest = user.friendInvitation.findIndex(userItem => userItem.id === selectUser.id) !== -1
         if (isSelectedUserSentRequest) {
             user.friends.push(selectUser)
             selectUser.friends.push(user)
-            let index = user.userFriendRequestId.indexOf(selectUser.id)
-            user.userFriendRequestId.splice(index, 1)
-            index = selectUser.myFriendshipRequestsId.indexOf(user.id)
-            selectUser.myFriendshipRequestsId.splice(index, 1)
+            let index = user.friendInvitation.findIndex(userItem => userItem.id === selectUser.id)
+            user.friendInvitation.splice(index, 1)
+            index = selectUser.myFriendshipRequests.findIndex(userItem => userItem.id === user.id)
+            selectUser.myFriendshipRequests.splice(index, 1)
         } else {
-            user.myFriendshipRequestsId.push(selectUser.id)
-            selectUser.userFriendRequestId.push(user.id)
+            user.myFriendshipRequests.push(selectUser)
+            selectUser.friendInvitation.push(user)
         }
         this.userRepository.save(user)
         this.userRepository.save(selectUser)
     }
 
-    async removeUserAsFriends(user: UserEntity, selectUser: UserEntity) {
-        const isFriend = user.friends.findIndex(frind => frind.id === selectUser.id) !== -1
-        const isBlackList = selectUser.blackListUsersId.findIndex(id => id === user.id) !== -1
+    async removeUserAsFriends(user: UserEntity, selectUser: UserEntity): Promise<void> {
+        const isFriend = user.friends.findIndex(friend => friend.id === selectUser.id) !== -1
+        const isBlackList = selectUser.blackListUsers.findIndex(userItem => userItem.id === user.id) !== -1
         if (!isFriend || isBlackList) {
-            return 
+            return
         }
-        
-    }
-
-    async rejectFriendshipRequest(user: UserEntity, selectUser: UserEntity) {
-
-    }
-
-    async blockedUser(user: UserEntity, selectUser: UserEntity) {
-
-    }
-
-    async unblockedUser(user: UserEntity, selectUser: UserEntity) {
-
-    }
-
-    buildWorldResponse(user: UserEntity, people: UserEntity[], conversations: ConversationEntity[]): WorldResponseInterface {
-        const world: ElementWorldType[] = []
-
-        people.forEach(userItem => {
-            if (user.id === userItem.id) {
-                return
-            }
-            world.push({
-                id: userItem.id,
-                name: userItem.username,
-                image: userItem.image,
-                status: 'online',
-                // type: 'user'
-                type: this.userService.getTypeUser(user, userItem.id)
-            })
-        })
-        conversations.forEach(conversation => {
-            world.push({
-                id: conversation.id,
-                name: conversation.conversationName,
-                image: conversation.image,
-                status: 'online',
-                // type: 'chat'
-                type: this.conversationService.getTypeConversation(user, conversation)
-            })
-        })
-        return {
-            world: world
+        let index = user.friends.findIndex(userItem => userItem.id === selectUser.id)
+        if (index !== -1) {
+            user.friends.splice(index, 1)
+            this.userRepository.save(user)
+        }
+        index = selectUser.friends.findIndex(userItem => userItem.id === user.id)
+        if (index !== -1) {
+            selectUser.friends.splice(index, 1)
+            this.userRepository.save(selectUser)
         }
     }
 
-    async buildUserProfileResponse(user: UserEntity, idOfSelectedUser: number): Promise<UserProfileResponseInterface> {
-        const typeUserInQuestion = await this.userService.getTypeUser(user, idOfSelectedUser)
-        delete user.password
-        return {
-            profile: {
-                ...user,
-                type: typeUserInQuestion
-            }
+    async rejectFriendshipRequest(user: UserEntity, selectUser: UserEntity): Promise<void> {
+        const isFriendInvitation = user.friendInvitation.findIndex(userItem => userItem.id === selectUser.id) !== -1
+        if (!isFriendInvitation) {
+            return
+        }
+        let index = user.friendInvitation.findIndex(userItem => userItem.id === selectUser.id)
+        if (index !== -1) {
+            user.friendInvitation.splice(index, 1)
+            this.userRepository.save(user)
+        }
+        index = selectUser.myFriendshipRequests.findIndex(userItem => userItem.id === user.id)
+        if (index !== -1) {
+            selectUser.myFriendshipRequests.splice(index, 1)
+            this.userRepository.save(selectUser)
+        }
+    }
+
+    async blockedUser(user: UserEntity, selectUser: UserEntity): Promise<void> {
+        this.rejectFriendshipRequest(user, selectUser)
+        this.removeUserAsFriends(user, selectUser)
+        user.blackListUsers.push(selectUser)
+        this.userRepository.save(user)
+    }
+
+    async unblockedUser(user: UserEntity, selectUser: UserEntity): Promise<void> {
+        let index = user.blackListUsers.findIndex(userItem => userItem.id === selectUser.id)
+        if (index !== -1) {
+            user.blackListUsers.splice(index, 1)
+            this.userRepository.save(user)
         }
     }
 }

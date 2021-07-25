@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common'
-import { EthersController } from './ethers.controller';
-import { EthersService } from './ethers.service';
+import { EthersController } from './ether.controller';
+import { EthersService } from './ether.service';
 
 @Module({
     imports: [],

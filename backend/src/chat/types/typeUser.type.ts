@@ -1,0 +1,1 @@
+export type TypeUserType = 'friend' | 'user' | 'userBlocked' | 'friendInvitation' | 'friendshipRequest'

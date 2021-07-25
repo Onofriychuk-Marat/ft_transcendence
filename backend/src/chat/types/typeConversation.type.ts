@@ -1,0 +1,1 @@
+export type TypeConversationType = 'chat' | 'chatOpen' | 'chatBlocked'

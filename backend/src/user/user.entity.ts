@@ -49,33 +49,20 @@ export class UserEntity {
     @JoinTable()
     conversations: ConversationEntity[]
 
-    // @Column('int', {array: true, default: []})
-    // conversationsId: number[]
-
-    // @ManyToMany(() => ChatEntity, (chat) => chat.blackListUsers)
-    // @JoinTable()
-    // blackListChats: ChatEntity[]
-
-    // @Column('int', {array: true, default: []})
-    // blackListchats: number[]
-
     @ManyToMany(() => UserEntity, user => user.friends)
     @JoinTable()
     friends: UserEntity[]
 
-    // @Column('int', {array: true, default: []})
-    // friendsId: number[]
+    @ManyToMany(() => UserEntity)
+    @JoinTable()
+    blackListUsers: UserEntity[]
 
-    // @ManyToMany(() => UserEntity, (user) => user.blackListUsers)
-    // @JoinTable()
-    // blackListUsers: UserEntity[]
+    @ManyToMany(() => UserEntity)
+    @JoinTable()
+    friendInvitation: UserEntity[]
 
-    @Column('int', {array: true, default: []})
-    blackListUsersId: number[]
+    @ManyToMany(() => UserEntity)
+    @JoinTable()
+    myFriendshipRequests: UserEntity[]
 
-    @Column('int', {array: true, default: []})
-    userFriendRequestId: number[]
-
-    @Column('int', {array: true, default: []})
-    myFriendshipRequestsId: number[]
 }
