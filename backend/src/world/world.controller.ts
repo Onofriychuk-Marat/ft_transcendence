@@ -45,57 +45,63 @@ export class WorldController {
         return this.chatService.buildChatResponse(chat)
     }
 
-    @Get('/users/:idUser')
+    @Get('/users/:userID')
     @UseGuards(AuthGuard)
     async watchSelectProfile(@User() user: UserEntity,
-                            @Param('idUser') idOfSelectedUser: number): Promise<ProfileSelectUserResponseInterface> {
+                            @Param('userID') idOfSelectedUser: number): Promise<ProfileSelectUserResponseInterface> {
         const selectUser = await this.userService.findById(idOfSelectedUser)
-        console.log('user>> ', user)
-        console.log('selectUser>> ', selectUser)
         const profile: ProfileSelectUserType = this.worldService.getProfileSelectUser(user, selectUser)
         return this.userService.buildProfileSelectUserResponse(profile)
     }
 
-    @Post('/users/:idUser/add')
+    @Post('/users/:userID/add')
     async addUserToFriends(@User() user: UserEntity,
-                            @Param('idUser') idOfSelectedUser: number): Promise<ProfileSelectUserResponseInterface> {
+                            @Param('userID') idOfSelectedUser: number): Promise<ProfileSelectUserResponseInterface> {
         const selectUser = await this.userService.findById(idOfSelectedUser)
         await this.worldService.addUserToFriends(user, selectUser)
         const profile: ProfileSelectUserType = this.worldService.getProfileSelectUser(user, selectUser)
         return this.userService.buildProfileSelectUserResponse(profile)
     }
 
-    @Post('/users/:idUser/reject')
+    @Post('/users/:userID/reject')
     async rejectFriendshipRequest(@User() user: UserEntity,
-                                    @Param('idUser') idOfSelectedUser: number): Promise<ProfileSelectUserResponseInterface> {
+                                    @Param('userID') idOfSelectedUser: number): Promise<ProfileSelectUserResponseInterface> {
         const selectUser = await this.userService.findById(idOfSelectedUser)
         await this.worldService.rejectFriendshipRequest(user, selectUser)
         const profile: ProfileSelectUserType = this.worldService.getProfileSelectUser(user, selectUser)
         return this.userService.buildProfileSelectUserResponse(profile)
     }
 
-    @Post('/users/:idUser/delete')
+    @Post('/users/:userID/accept')
+    async acceptFriednshipRequest(@User() user: UserEntity,
+                                    @Param('userID') idOfSelectedUser: number): Promise<ProfileSelectUserResponseInterface> {
+        const selectUser = await this.userService.findById(idOfSelectedUser)
+        await this.worldService.addUserToFriends(user, selectUser)
+        const profile: ProfileSelectUserType = this.worldService.getProfileSelectUser(user, selectUser)
+        return this.userService.buildProfileSelectUserResponse(profile)
+    }
+
+    @Post('/users/:userID/delete')
     async removeUserAsFriends(@User() user: UserEntity,
-                                @Param('idUser') idOfSelectedUser: number): Promise<ProfileSelectUserResponseInterface> {
+                                @Param('userID') idOfSelectedUser: number): Promise<ProfileSelectUserResponseInterface> {
         const selectUser = await this.userService.findById(idOfSelectedUser)
         await this.worldService.removeUserAsFriends(user, selectUser)
         const profile: ProfileSelectUserType = this.worldService.getProfileSelectUser(user, selectUser)
         return this.userService.buildProfileSelectUserResponse(profile)
     }
 
-    @Post('/users/:idUser/blocked')
+    @Post('/users/:userID/blocked')
     async blockedUser(@User() user: UserEntity,
-                        @Param('idUser') idOfSelectedUser: number): Promise<ProfileSelectUserResponseInterface> {
+                        @Param('userID') idOfSelectedUser: number): Promise<ProfileSelectUserResponseInterface> {
         const selectUser = await this.userService.findById(idOfSelectedUser)
-        console.log('selectUser)) ', selectUser)
         await this.worldService.blockedUser(user, selectUser)
         const profile: ProfileSelectUserType = this.worldService.getProfileSelectUser(user, selectUser)
         return this.userService.buildProfileSelectUserResponse(profile)
     }
 
-    @Post('/users/:idUser/unblocked')
+    @Post('/users/:userID/unblocked')
     async unblockedUser(@User() user: UserEntity,
-                        @Param('idUser') idOfSelectedUser: number): Promise<ProfileSelectUserResponseInterface> {
+                        @Param('userID') idOfSelectedUser: number): Promise<ProfileSelectUserResponseInterface> {
         const selectUser = await this.userService.findById(idOfSelectedUser)
         await this.worldService.unblockedUser(user, selectUser)
         const profile: ProfileSelectUserType = this.worldService.getProfileSelectUser(user, selectUser)
