@@ -15,7 +15,6 @@ export class AuthMiddleware implements NestMiddleware {
             next()
             return ;
         }
-
         const token = request.headers.authorization.split(' ')[1]
 
         try {

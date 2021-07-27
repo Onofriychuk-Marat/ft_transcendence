@@ -36,6 +36,7 @@ export class UserService {
         }
         const newUser = new UserEntity()
         Object.assign(newUser, createUserDto)
+        newUser.position = 'User'
         return await this.userRepository.save(newUser)
     }
 

@@ -1,7 +1,8 @@
 
 export type EtherType = {
     id: number,
-    rivals: string,
+    firstFighter: string,
+    secondFighter: string,
     duration: string,
     numberOfWatching: number
 }

@@ -7,25 +7,29 @@ export class EthersService {
         return [
             {
                 id: 123,
-                rivals: 'utoomey:qmarowak',
+                firstFighter: 'utoomey',
+                secondFighter: 'qmarowak',
                 duration: '00:11:24',
                 numberOfWatching: 14
             },
             {
                 id: 123,
-                rivals: 'utoomey:qmarowak',
+                firstFighter: 'utoomey',
+                secondFighter: 'qmarowak',
                 duration: '00:11:24',
                 numberOfWatching: 14
             },
             {
                 id: 123,
-                rivals: 'utoomey:qmarowak',
+                firstFighter: 'utoomey',
+                secondFighter: 'qmarowak',
                 duration: '00:11:24',
                 numberOfWatching: 14
             },
             {
                 id: 123,
-                rivals: 'utoomey:qmarowak',
+                firstFighter: 'utoomey',
+                secondFighter: 'qmarowak',
                 duration: '00:11:24',
                 numberOfWatching: 14
             }

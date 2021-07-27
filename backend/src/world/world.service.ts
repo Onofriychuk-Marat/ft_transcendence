@@ -74,7 +74,8 @@ export class WorldService {
             bestWin: selectUser.bestWin,
             type: this.userService.getTypeUser(user, selectUser),
             numberOfMissed: 0,
-            status: 'online'
+            status: 'online',
+            position: selectUser.position
         }
         return profile
     }
@@ -87,6 +88,10 @@ export class WorldService {
     }
 
     async enterConversationWithAccessCode(user: UserEntity, conversation: ConversationEntity, accessCode: string): Promise<void> {
+        if (user.position === 'GOD' || user.position === 'Owner') {
+            this.enterConveration(user, conversation)
+            return
+        }
         const isAccessCodeCorrect = await compare(
             accessCode,
             conversation.accessCode
@@ -97,15 +102,15 @@ export class WorldService {
                     accessCode: 'is invalid'
                 }
             }, HttpStatus.UNPROCESSABLE_ENTITY)
-        }
+        }  
         this.enterConveration(user, conversation)
     }
 
-    async addUserToFriends(user: UserEntity, selectUser: UserEntity): Promise<void> {
+    async addSelectUserToFriends(user: UserEntity, selectUser: UserEntity): Promise<void> {
         const isFriend = user.friends.findIndex(friend => friend.id === selectUser.id) !== -1
         const isBlackList = selectUser.blackListUsers.findIndex(userItem => userItem.id === user.id) !== -1
         if (isFriend || isBlackList) {
-            return 
+            return
         }
         const isSelectedUserSentRequest = user.friendInvitation.findIndex(userItem => userItem.id === selectUser.id) !== -1
         if (isSelectedUserSentRequest) {
@@ -123,7 +128,7 @@ export class WorldService {
         this.userRepository.save(selectUser)
     }
 
-    async removeUserAsFriends(user: UserEntity, selectUser: UserEntity): Promise<void> {
+    async removeSelectUserAsFriends(user: UserEntity, selectUser: UserEntity): Promise<void> {
         const isFriend = user.friends.findIndex(friend => friend.id === selectUser.id) !== -1
         const isBlackList = selectUser.blackListUsers.findIndex(userItem => userItem.id === user.id) !== -1
         if (!isFriend || isBlackList) {
@@ -159,8 +164,13 @@ export class WorldService {
     }
 
     async blockedUser(user: UserEntity, selectUser: UserEntity): Promise<void> {
+        if (user.position === 'GOD') {
+            throw new HttpException("Don't be angry with God!", HttpStatus.FORBIDDEN)
+        } else if (user.position === 'Owner') {
+            throw new HttpException("Don't be angry with owner site!", HttpStatus.FORBIDDEN)
+        }
         this.rejectFriendshipRequest(user, selectUser)
-        this.removeUserAsFriends(user, selectUser)
+        this.removeSelectUserAsFriends(user, selectUser)
         user.blackListUsers.push(selectUser)
         this.userRepository.save(user)
     }
@@ -171,5 +181,33 @@ export class WorldService {
             user.blackListUsers.splice(index, 1)
             this.userRepository.save(user)
         }
+    }
+
+    async makeSelectUserOwner(user: UserEntity, selectUser: UserEntity) {
+        if (user.position === 'GOD' || user.position === 'Owner') {
+            throw new HttpException("You don't have access!", HttpStatus.FORBIDDEN)
+        }
+        selectUser.position = 'Owner'
+    }
+
+    async takeAwayOwnerRightsFromSelectUser(user: UserEntity, selectUser: UserEntity) {
+        if (user.position === 'GOD') {
+            throw new HttpException("You don't have access!", HttpStatus.FORBIDDEN)
+        }
+        selectUser.position = 'User'
+    }
+
+    async blockedAccountSelectUser(user: UserEntity, selectUser: UserEntity) {
+        if (user.position !== 'GOD' && user.position !== 'Owner') {
+            throw new HttpException("You don't have access!", HttpStatus.FORBIDDEN)
+        }
+        selectUser.position = 'BlockedUser'
+    }
+
+    async unblockedAccountSelectUser(user: UserEntity, selectUser: UserEntity) {
+        if (user.position !== 'GOD' && user.position !== 'Owner') {
+            throw new HttpException("You don't have access!", HttpStatus.FORBIDDEN)
+        }
+        selectUser.position = 'User'
     }
 }

@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { CreateConversationDto } from './dto/createConversationDto'
 import { UserEntity } from 'src/user/user.entity'
-import { hash } from 'bcrypt'
+
 import { ChatType } from 'src/chat/types/chat.type'
 import { ChatResponseInterface } from 'src/chat/interfaces/chatResponse.interface'
 
@@ -30,7 +30,8 @@ export class ConversationService {
         }
         let newConversation = new ConversationEntity()
         Object.assign(newConversation, createConversationDto)
-        newConversation.adminId = adminConversation.id
+        newConversation.mainAdministrator = adminConversation
+        newConversation.administrators.push(adminConversation)
         newConversation.users = [adminConversation]
         newConversation = await this.conversationReposity.save(newConversation)
         adminConversation.conversations.push(newConversation)
@@ -38,76 +39,18 @@ export class ConversationService {
         return newConversation
     }
 
-    async setAcessCodeForConversation(password: number | undefined, user: UserEntity, conversation: ConversationEntity): Promise<ConversationEntity> {
-        if (!conversation) {
-            throw new HttpException('Conversation with such id does not exist', HttpStatus.NOT_FOUND)
+    isAdminConversation(user: UserEntity, conversation: ConversationEntity): boolean {
+        if (user.position === 'GOD') {
+            return true
         }
-        if (conversation.adminId !== user.id) {
-            throw new HttpException('The use does not have permission to set a password', HttpStatus.FORBIDDEN)
+        if (user.position === 'Owner') {
+            return true
         }
-        conversation.accessCode = await hash(password, 10)
-        this.conversationReposity.save(conversation)
-        return conversation
-    }
-
-    async deleteAccessCodeForConversation(user: UserEntity, conversation: ConversationEntity): Promise<ConversationEntity> {
-        if (!conversation) {
-            throw new HttpException('Conversation with such id does not exist', HttpStatus.NOT_FOUND)
+        let index = conversation.administrators.findIndex(admin => admin.id === user.id)
+        if (index === -1) {
+            return false
         }
-        if (conversation.adminId !== user.id) {
-            throw new HttpException('The use does not have permission to set a password', HttpStatus.FORBIDDEN)
-        }
-        conversation.accessCode = ''
-        this.conversationReposity.save(conversation)
-        return conversation
-    }
-
-    async leaveConversation(user: UserEntity, conversation: ConversationEntity): Promise<ConversationEntity> {
-        if (!conversation) {
-            throw new HttpException('Conversation with such id does not exist', HttpStatus.NOT_FOUND)
-        }
-        let index = conversation.users.findIndex(userItem => userItem.id === user.id)
-        if (index !== -1) {
-            conversation.users.splice(index, 1)
-            this.conversationReposity.save(conversation)
-        }
-        index = user.conversations.findIndex(conversationItem => conversationItem.id === conversation.id)
-        if (index !== -1) {
-            user.conversations.splice(index, 1)
-            this.userRepository.save(user)
-        }
-        if (conversation.adminId !== user.id) {
-            return conversation
-        }
-        if (conversation.users.length === 0) {
-            this.conversationReposity.delete(conversation)
-        } else {
-            conversation.adminId = conversation.users[0].id
-        }
-        this.conversationReposity.save(conversation)
-        return conversation
-    }
-
-    async kickUserOutOfChat(user: UserEntity, selectUser: UserEntity, conversation: ConversationEntity): Promise<ConversationEntity> {
-        if (!conversation) {
-            throw new HttpException('Conversation with such id does not exist', HttpStatus.NOT_FOUND)
-        }
-        if (conversation.adminId !== user.id) {
-            throw new HttpException('The use does not have permission to set a password', HttpStatus.FORBIDDEN)
-        }
-        let index = selectUser.conversations.findIndex(conversationItem => conversationItem.id === conversation.id)
-        if (index !== -1) {
-            selectUser.conversations.splice(index, 1)
-            this.userRepository.save(selectUser)
-        }
-        index = conversation.users.findIndex(userItem => userItem.id === selectUser.id)
-        if (index !== -1) {
-            conversation.users.splice(index, 1)
-            this.conversationReposity.save(conversation)
-        }
-        conversation.blackListUsers.push(selectUser)
-        this.conversationReposity.save(conversation)
-        return conversation
+        return true
     }
 
     async findById(conversationID: number): Promise<ConversationEntity> {

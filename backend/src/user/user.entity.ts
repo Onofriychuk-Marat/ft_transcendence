@@ -45,6 +45,9 @@ export class UserEntity {
     @Column({default: 0})
     bestWin: number
 
+    @Column({default: false})
+    position: 'GOD' | 'Owner' | 'User' | 'BlockedUser'
+
     @ManyToMany(() => ConversationEntity, conversation => conversation.users)
     @JoinTable()
     conversations: ConversationEntity[]
