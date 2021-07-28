@@ -2,6 +2,7 @@ import { Entity, JoinColumn, OneToOne, Column, JoinTable, PrimaryGeneratedColumn
 import { hash } from 'bcrypt'
 import { UserEntity } from 'src/user/user.entity'
 import { User } from 'src/user/decorators/user.decorator'
+import { ChatEntity } from 'src/chat/chat.entity'
 
 @Entity({name: 'conversation'})
 export class ConversationEntity {
@@ -32,10 +33,11 @@ export class ConversationEntity {
     @JoinTable()
     administrators: UserEntity[]
 
-    @ManyToMany(() => UserEntity, user => user.conversations)
-    users: UserEntity[]
-
     @ManyToMany(() => UserEntity)
     @JoinTable()
     blackListUsers: UserEntity[]
+
+    @OneToOne(() => ChatEntity)
+    @JoinColumn()
+    chat: ChatEntity
 }

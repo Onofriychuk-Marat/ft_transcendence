@@ -24,8 +24,6 @@ export class ChatService {
         private conversationService: ConversationService
     ) {}
 
-    
-
     async setAcessCodeForConversation(password: number | undefined, user: UserEntity, conversation: ConversationEntity): Promise<ConversationEntity> {
         if (!conversation) {
             throw new HttpException('Conversation with such id does not exist', HttpStatus.NOT_FOUND)
@@ -59,7 +57,7 @@ export class ChatService {
         const isMainAdmin = conversation.mainAdministrator.id === user.id
         if (isMainAdmin && newAdministrator === undefined) {
             throw new HttpException('No new administrator specified!', 400)
-        } else if (conversation.users.length === 0) {
+        } else if (conversation.chat.users.length === 0) {
             this.conversationRepository.delete(conversation)
         } else {
             conversation.mainAdministrator = newAdministrator
@@ -72,9 +70,9 @@ export class ChatService {
                 conversation.administrators.push(newAdministrator)
             }
         }
-        let index = conversation.users.findIndex(userItem => userItem.id === user.id)
+        let index = conversation.chat.users.findIndex(userItem => userItem.id === user.id)
         if (index !== -1) {
-            conversation.users.splice(index, 1)
+            conversation.chat.users.splice(index, 1)
         }
         index = user.conversations.findIndex(conversationItem => conversationItem.id === conversation.id)
         if (index !== -1) {
@@ -103,9 +101,9 @@ export class ChatService {
             selectUser.conversations.splice(index, 1)
             this.userRepository.save(selectUser)
         }
-        index = conversation.users.findIndex(userItem => userItem.id === selectUser.id)
+        index = conversation.chat.users.findIndex(userItem => userItem.id === selectUser.id)
         if (index !== -1) {
-            conversation.users.splice(index, 1)
+            conversation.chat.users.splice(index, 1)
             this.conversationRepository.save(conversation)
         }
         conversation.blackListUsers.push(selectUser)
@@ -126,7 +124,7 @@ export class ChatService {
             conversation.blackListUsers.splice(index, 1)
         }
         selectUser.conversations.push(conversation)
-        conversation.users.push(selectUser)
+        conversation.chat.users.push(selectUser)
         this.conversationRepository.save(conversation)
         this.userRepository.save(selectUser)
         return conversation
@@ -205,7 +203,7 @@ export class ChatService {
     getUsersConversation(user: UserEntity, conversation: ConversationEntity): UserConversationType[] {
         const chats: UserConversationType[] = []
 
-        conversation.users.map(userConversation => {
+        conversation.chat.users.map(userConversation => {
             if (userConversation.id == user.id) {
                 return
             }

@@ -1,6 +1,7 @@
 import { JoinTable, Column, PrimaryGeneratedColumn, Entity, BeforeInsert, ManyToMany, OneToMany } from 'typeorm'
 import { hash } from 'bcrypt'
 import { ConversationEntity } from 'src/conversation/conversation.entity'
+import { ChatEntity } from 'src/chat/chat.entity'
 
 @Entity({name: 'users'})
 export class UserEntity {
@@ -48,9 +49,13 @@ export class UserEntity {
     @Column({default: false})
     position: 'GOD' | 'Owner' | 'User' | 'BlockedUser'
 
-    @ManyToMany(() => ConversationEntity, conversation => conversation.users)
+    @ManyToMany(() => ConversationEntity, conversation => conversation.chat.users)
     @JoinTable()
     conversations: ConversationEntity[]
+
+    @ManyToMany(() => ChatEntity, chat => chat.users)
+    @JoinTable()
+    friendChat: ChatEntity[]
 
     @ManyToMany(() => UserEntity, user => user.friends)
     @JoinTable()
@@ -67,5 +72,4 @@ export class UserEntity {
     @ManyToMany(() => UserEntity)
     @JoinTable()
     myFriendshipRequests: UserEntity[]
-
 }

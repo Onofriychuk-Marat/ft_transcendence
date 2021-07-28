@@ -1,6 +1,6 @@
 import { createApp } from 'vue'
 import App from './App.vue'
-import axios from 'axios'
+// import axios from 'axios'
 
 // axios('/api/user/registration', {
 //   method: 'POST',

@@ -7,6 +7,7 @@ import { UserEntity } from 'src/user/user.entity'
 
 import { ChatType } from 'src/chat/types/chat.type'
 import { ChatResponseInterface } from 'src/chat/interfaces/chatResponse.interface'
+import { ChatEntity } from 'src/chat/chat.entity'
 
 @Injectable()
 export class ConversationService {
@@ -14,7 +15,9 @@ export class ConversationService {
         @InjectRepository(ConversationEntity)
         private readonly conversationReposity: Repository<ConversationEntity>,
         @InjectRepository(UserEntity)
-        private readonly userRepository: Repository<UserEntity>
+        private readonly userRepository: Repository<UserEntity>,
+        @InjectRepository(ChatEntity)
+        private readonly chatRepository: Repository<ChatEntity>
     ) {}
 
     async createConversation(createConversationDto: CreateConversationDto, adminConversation: UserEntity): Promise<ConversationEntity> {
@@ -31,8 +34,11 @@ export class ConversationService {
         let newConversation = new ConversationEntity()
         Object.assign(newConversation, createConversationDto)
         newConversation.mainAdministrator = adminConversation
-        newConversation.administrators.push(adminConversation)
-        newConversation.users = [adminConversation]
+        newConversation.administrators = [adminConversation]
+        let newChat = new ChatEntity()
+        newChat.users = [adminConversation]
+        newConversation.chat = newChat
+        await this.chatRepository.save(newChat)
         newConversation = await this.conversationReposity.save(newConversation)
         adminConversation.conversations.push(newConversation)
         await this.userRepository.save(adminConversation)
@@ -55,7 +61,7 @@ export class ConversationService {
 
     async findById(conversationID: number): Promise<ConversationEntity> {
         return await this.conversationReposity.findOne(conversationID, {
-            relations: ['users', 'blackListUsers']
+            relations: ['blackListUsers', 'administrators']
         })
     }
 

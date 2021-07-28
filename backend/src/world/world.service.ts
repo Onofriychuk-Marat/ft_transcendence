@@ -82,7 +82,7 @@ export class WorldService {
 
     async enterConveration(user: UserEntity, conversation: ConversationEntity): Promise<void> {
         user.conversations.push(conversation)
-        conversation.users.push(user)
+        conversation.chat.users.push(user)
         this.userRepository.save(user)
         this.conversationRepository.save(conversation)
     }
