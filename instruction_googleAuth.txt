@@ -1,0 +1,31 @@
+################################
+GOOGLE Authenticator
+################################
+source: https://authenticatorapi.com/
+
+1) generate secret code for user (must be can genereted again for user) / сгенерировать секретный код для пользователя (нужно чтобы код можно было восстановить для пользователя)
+2) send request (GET/POST) to https://www.authenticatorApi.com/pair.aspx / отправить запрос (GET/POST) на https://www.authenticatorApi.com/pair.aspx
+	2.1) request parameters: AppName (Your application name, something brief, but recognizable), AppInfo (Typically the user's name), SecretCode (A secret code that only you know, previously genereted)
+	2.1) параметры запроса: ИмяПриложения (имя вашего приложенияБ что-то простое, но запроминающееся), ИнформацияПриложения (обычно имя пользователя), СекретныйКод (Секретный Код, который знаете только вы, сгенерирован ранее)
+
+	2.2) request example: https://www.authenticatorApi.com/pair.aspx?AppName=<MYSUPERAPP>&AppInfo=<USERNAME>&SecretCode=<OURSECRETCODE>
+	2.2) пример запроса: https://www.authenticatorApi.com/pair.aspx?AppName=<MYSUPERAPP>&AppInfo=<USERNAME>&SecretCode=<OURSECRETCODE>
+
+	2.2) get XML with QR-code, then show for user this QR for pairing with Google Authenticator App
+	2.2) получить XML с QR кодом, затем показать его пользователю для соединения с приложением аутенфикатора
+3) send request (GET/POST) to https://www.authenticatorApi.com/Validate.aspx / отправить запрос (GET/POST) на https://www.authenticatorApi.com/Validate.aspx
+	3.1) request parameters: Pin (The user's pin), SecretCode (The secret code used using Pairing)
+	3.1) параметры запроса: Пин (пин пользователя), СекретныйКод (секретный код использованный для соединения)
+
+	3.2) request example: https://www.authenticatorApi.com/Validate.aspx?Pin=<USERPIN>&SecretCode=<OURSECRETCODE>
+	3.2) пример запроса: https://www.authenticatorApi.com/Validate.aspx?Pin=<USERPIN>&SecretCode=<OURSECRETCODE>
+
+	3.3) request return True, if user's pin is valid, or False otherwise
+	3.3) запрос возвращает True, если пин пользователя валиден, или False иначе
+
+	3.4) after pairing user should enter his pin for corrections check
+	3.4) после соединения пользователь должен ввести свой пин для проверки
+
+	3.5) for each login user should enter with valid Pin
+	3.5) для каждого входа пользователь должен входить с валидным паролем
+--------------------------------

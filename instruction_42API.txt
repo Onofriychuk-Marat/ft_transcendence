@@ -1,0 +1,24 @@
+################################
+42 API
+################################
+source: https://api.intra.42.fr/
+info for our app: https://profile.intra.42.fr/oauth/applications/6538
+
+1) send request (GET/POST) to https://api.intra.42.fr/oauth/authorize?client_id=74bccccfc5c882fab475da83297ac3e5f3a0634bac58c1a51e1c10244be8ffd4&redirect_uri=https%3A%2F%2Fwww.google.com%2F&response_type=code (CHANGE redirect uri)
+1) отправить запрос (GET/POST) на https://api.intra.42.fr/oauth/authorize?client_id=74bccccfc5c882fab475da83297ac3e5f3a0634bac58c1a51e1c10244be8ffd4&redirect_uri=https%3A%2F%2Fwww.google.com%2F&response_type=code (ИЗМЕНИТЬ redirect uri)
+
+2) after login request return <OUR_RETURN_URI>?code=<CODE>
+2) после логина запрос возвращает <OUR_RETURN_URI>?code=<CODE>
+
+3) to excange code for access token send request POST to https://api.intra.42.fr/oauth/token/?grant_type=authorization_code&client_id=74bccccfc5c882fab475da83297ac3e5f3a0634bac58c1a51e1c10244be8ffd4&client_secret=bb20efd25886763459d59bb96fa06e82e6868f9d62088872be7bfa30075b94f6&code=<CODE_FROM_PREVIOUS>&request_uri=<OUR_REQUEST_URI>
+3) для обмена кода на токен доступа отправить запрос POST на https://api.intra.42.fr/oauth/token/?grant_type=authorization_code&client_id=74bccccfc5c882fab475da83297ac3e5f3a0634bac58c1a51e1c10244be8ffd4&client_secret=bb20efd25886763459d59bb96fa06e82e6868f9d62088872be7bfa30075b94f6&code=<CODE_FROM_PREVIOUS>&request_uri=<OUR_REQUEST_URI>
+
+4) request return access token for this user
+4) запрос возвращает токен доступа для текущего пользователя
+
+5) have fun with your user =)
+5) веселитесь с вашим пользователем =)
+
+	5.1) access token expirated in 2 hours
+	5.1) токен доступа пропадет через 2 часа
+--------------------------------
