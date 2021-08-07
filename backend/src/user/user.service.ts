@@ -15,12 +15,15 @@ import { ProfileType } from './types/profile.type'
 import { ProfileResponseInterface } from './interfaces/profileResponse.interface'
 import { ProfileSelectUserType } from './types/profileSelectUser.type'
 import { ProfileSelectUserResponseInterface } from './interfaces/profileSelectUserResponse.interface'
+import { FriendEntity } from './friend.entity'
 
 @Injectable()
 export class UserService {
     constructor(
         @InjectRepository(UserEntity)
-        private readonly userRepository: Repository<UserEntity>
+        private readonly userRepository: Repository<UserEntity>,
+        @InjectRepository(FriendEntity)
+        private readonly friendRepository: Repository<FriendEntity>
     ) {}
 
     async registration(createUserDto: CreateUserDto): Promise<UserEntity> {
@@ -80,12 +83,28 @@ export class UserService {
 
     async findById(id: number): Promise<UserEntity> {
         return this.userRepository.findOne(id, { 
-            relations: ['conversations', 'friends', 'blackListUsers', 'friendInvitation', 'myFriendshipRequests'] 
+            relations: ['conversations', 'friends',
+            'blackListUsers', 'friendInvitation',
+            'myFriendshipRequests', 'friends.profile', 'friends.chat',
+            'conversations.chat'] 
         })
     }
 
+
     async findAll(): Promise<UserEntity[]> {
         return this.userRepository.find()
+    }
+
+    saveUserEntity(user: UserEntity): Promise<UserEntity> {
+        return this.userRepository.save(user)
+    }
+
+    saveFriendEntity(friend: FriendEntity): Promise<FriendEntity> {
+        return this.friendRepository.save(friend)
+    }
+
+    deleteFriendEntity(friend: FriendEntity) {
+        return this.friendRepository.delete(friend)
     }
 
     generateJwt(user: UserEntity): string {
@@ -95,8 +114,8 @@ export class UserService {
         }, JWT_SECRET)
     }
 
-    getTypeUser(user: UserEntity, selectUser: UserEntity): TypeUserType  {
-        const isFriend = user.friends.findIndex(friend => friend.id === selectUser.id) !== -1
+    getTypeUser(user: UserEntity, selectUser: UserEntity): TypeUserType {
+        const isFriend = user.friends.findIndex(friend => friend.profile.id === selectUser.id) !== -1
         if (isFriend) {
             return 'friend'
         }

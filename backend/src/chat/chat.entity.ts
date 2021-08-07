@@ -11,6 +11,7 @@ export class ChatEntity {
     @JoinTable()
     users: UserEntity[]
 
-    @OneToMany(() => MessageEntity, message => message.chat)
+    @ManyToMany(() => MessageEntity)
+    @JoinTable()
     messages: MessageEntity[]
 }

@@ -2,6 +2,7 @@ import { JoinTable, Column, PrimaryGeneratedColumn, Entity, BeforeInsert, ManyTo
 import { hash } from 'bcrypt'
 import { ConversationEntity } from 'src/conversation/conversation.entity'
 import { ChatEntity } from 'src/chat/chat.entity'
+import { FriendEntity } from './friend.entity'
 
 @Entity({name: 'users'})
 export class UserEntity {
@@ -53,13 +54,13 @@ export class UserEntity {
     @JoinTable()
     conversations: ConversationEntity[]
 
-    @ManyToMany(() => ChatEntity, chat => chat.users)
-    @JoinTable()
-    friendChat: ChatEntity[]
+    // @ManyToMany(() => ChatEntity, chat => chat.users)
+    // @JoinTable()
+    // friendChat: ChatEntity[]
 
-    @ManyToMany(() => UserEntity, user => user.friends)
+    @ManyToMany(() => FriendEntity)
     @JoinTable()
-    friends: UserEntity[]
+    friends: FriendEntity[]
 
     @ManyToMany(() => UserEntity)
     @JoinTable()

@@ -85,7 +85,7 @@ export class ChatController {
         return this.chatService.buildChatResponse(chat)
     }
 
-    @Post('conversations/:conversationID/users/:userID/blocked')
+    @Post('conversations/:conversationID/users/:userID/blocked') // for admin
     @UseGuards(AuthGuard)
     async blockUserInConversation(@User() user: UserEntity,
                         @Param('conversationID') conversationID: number,
@@ -101,7 +101,7 @@ export class ChatController {
         return this.chatService.buildUserConversationResponse(userConversation)
     }
 
-    @Post('conversations/:conversationID/users/:userID/unblocked')
+    @Post('conversations/:conversationID/users/:userID/unblocked') // for admin
     @UseGuards(AuthGuard)
     async unblockUserInConversation(@User() user: UserEntity,
                         @Param('conversationID') conversationID: number,
@@ -114,7 +114,7 @@ export class ChatController {
         return this.chatService.buildUserConversationResponse(userConversation)
     }
 
-    @Post('/chats/conversations/:conversationID/users/:userID/make-admin')
+    @Post('/conversations/:conversationID/users/:userID/make-admin') // for admin
     @UseGuards(AuthGuard)
     async makeSelectUserAnAdministrator(@User() user: UserEntity,
                                         @Param('conversationID') conversationID: number,
@@ -126,7 +126,7 @@ export class ChatController {
         return this.chatService.buildUserConversationResponse(userConversation)
     }
 
-    @Post('/chats/conversations/:conversationID/users/:userID/remove-admin')
+    @Post('/conversations/:conversationID/users/:userID/remove-admin') // for admin
     @UseGuards(AuthGuard)
     async takeAwayAdministratorRightsFromSelectedUser(@User() user: UserEntity,
                                                         @Param('conversationID') conversationID: number,

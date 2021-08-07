@@ -15,7 +15,6 @@ export class AuthGuard implements CanActivate {
         if (!request.user) {
             throw new HttpException("Not authorized", HttpStatus.UNAUTHORIZED)
         }
-        console.log(request.user)
         if (request.user.position === 'BlockedUser') {
             throw new HttpException("You've been blocked!", 418)
         }

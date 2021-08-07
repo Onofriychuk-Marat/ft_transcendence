@@ -8,6 +8,8 @@ import { UserEntity } from 'src/user/user.entity'
 import { ChatType } from 'src/chat/types/chat.type'
 import { ChatResponseInterface } from 'src/chat/interfaces/chatResponse.interface'
 import { ChatEntity } from 'src/chat/chat.entity'
+import { UserService } from 'src/user/user.service'
+import { ChatService } from 'src/chat/chat.service'
 
 @Injectable()
 export class ConversationService {
@@ -37,8 +39,7 @@ export class ConversationService {
         newConversation.administrators = [adminConversation]
         let newChat = new ChatEntity()
         newChat.users = [adminConversation]
-        newConversation.chat = newChat
-        await this.chatRepository.save(newChat)
+        newConversation.chat = await this.chatRepository.save(newChat)
         newConversation = await this.conversationReposity.save(newConversation)
         adminConversation.conversations.push(newConversation)
         await this.userRepository.save(adminConversation)
@@ -61,12 +62,21 @@ export class ConversationService {
 
     async findById(conversationID: number): Promise<ConversationEntity> {
         return await this.conversationReposity.findOne(conversationID, {
-            relations: ['blackListUsers', 'administrators']
+            relations: ['mainAdministrator', 'blackListUsers',
+            'administrators', 'chat']
         })
     }
 
     async findAll(): Promise<ConversationEntity[]> {
         return await this.conversationReposity.find()
+    }
+
+    saveConversationEntity(conversation: ConversationEntity): Promise<ConversationEntity> {
+        return this.conversationReposity.save(conversation)
+    }
+
+    deleteConversationEntity(conversation: ConversationEntity) {
+        return this.conversationReposity.delete(conversation)
     }
 
     getTypeConversation(user: UserEntity, conversation: ConversationEntity): 'chat' | 'chatOpen' | 'chatBlocked' {

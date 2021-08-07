@@ -1,4 +1,4 @@
-import { Entity, JoinColumn, OneToOne, Column, JoinTable, PrimaryGeneratedColumn, ManyToMany, OneToMany, BeforeInsert } from 'typeorm'
+import { Entity, JoinColumn, OneToOne, Column, JoinTable, ManyToOne, PrimaryGeneratedColumn, ManyToMany, OneToMany, BeforeInsert } from 'typeorm'
 import { hash } from 'bcrypt'
 import { UserEntity } from 'src/user/user.entity'
 import { User } from 'src/user/decorators/user.decorator'
@@ -25,7 +25,7 @@ export class ConversationEntity {
         }
     }
 
-    @OneToOne(() => UserEntity)
+    @ManyToOne(() => UserEntity)
     @JoinColumn()
     mainAdministrator: UserEntity
 

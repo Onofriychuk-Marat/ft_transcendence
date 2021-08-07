@@ -10,6 +10,8 @@ import { EtherModule } from './ether/ether.module';
 import { ChatModule } from './chat/chat.module';
 import { WorldModule } from './world/world.module';
 import { ConversationModule } from './conversation/conversations.module';
+import { TestModule } from './test/test.module';
+import { TestGateway } from './test/test.gateway';
 
 @Module({
 	imports: [
@@ -19,10 +21,11 @@ import { ConversationModule } from './conversation/conversations.module';
 		EtherModule,
 		ChatModule,
 		WorldModule,
-		ConversationModule
+		ConversationModule,
+		// TestModule
 	],
 	controllers: [AppController],
-	providers: [AppService],
+	providers: [AppService, TestGateway],
 })
 export class AppModule {
 	configure(consumer: MiddlewareConsumer) {

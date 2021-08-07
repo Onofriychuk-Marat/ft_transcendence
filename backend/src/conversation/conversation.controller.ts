@@ -15,6 +15,7 @@ export class ConversationController {
     @UsePipes(new ValidationPipe())
     async createConversation(@User() user: UserEntity,
                                 @Body('conversation') createConversationDto: CreateConversationDto): Promise<ChatResponseInterface> {
+
         const conversation = await this.conversationService.createConversation(createConversationDto, user)
         const chat = this.conversationService.getConversation(user, conversation)
         return this.conversationService.buildConversationResponse(chat)

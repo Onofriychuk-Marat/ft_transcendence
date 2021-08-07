@@ -12,14 +12,16 @@ import { UserConversationType } from './types/userConversation.type'
 import { UsersConversationResponseInterface } from './interfaces/UsersConversationResponse.interface'
 import { UserConversationResponseInterface } from './interfaces/UserConversatinResponse.interface'
 import { hash } from 'bcrypt'
+import { ChatEntity } from './chat.entity'
+import { MessageEntity } from './message.entity'
 
 @Injectable()
 export class ChatService {
     constructor(
-        @InjectRepository(ConversationEntity)
-        private readonly conversationRepository: Repository<ConversationEntity>,
-        @InjectRepository(UserEntity)
-        private readonly userRepository: Repository<UserEntity>,
+        @InjectRepository(ChatEntity)
+        private readonly chatRespository: Repository<ChatEntity>,
+        @InjectRepository(MessageEntity)
+        private readonly messageRepository: Repository<MessageEntity>,
         private userService: UserService,
         private conversationService: ConversationService
     ) {}
@@ -33,7 +35,7 @@ export class ChatService {
             throw new HttpException('The use does not have permission to set a password', HttpStatus.FORBIDDEN)
         }
         conversation.accessCode = await hash(password, 10)
-        this.conversationRepository.save(conversation)
+        this.conversationService.saveConversationEntity(conversation)
         return conversation
     }
 
@@ -46,7 +48,7 @@ export class ChatService {
             throw new HttpException('The use does not have permission to set a password', HttpStatus.FORBIDDEN)
         }
         conversation.accessCode = ''
-        this.conversationRepository.save(conversation)
+        this.conversationService.saveConversationEntity(conversation)
         return conversation
     }
 
@@ -58,7 +60,7 @@ export class ChatService {
         if (isMainAdmin && newAdministrator === undefined) {
             throw new HttpException('No new administrator specified!', 400)
         } else if (conversation.chat.users.length === 0) {
-            this.conversationRepository.delete(conversation)
+            this.conversationService.deleteConversationEntity(conversation)
         } else {
             conversation.mainAdministrator = newAdministrator
             let index = conversation.administrators.findIndex(userItem => userItem.id === user.id)
@@ -78,8 +80,8 @@ export class ChatService {
         if (index !== -1) {
             user.conversations.splice(index, 1)
         }
-        this.userRepository.save(user)
-        this.conversationRepository.save(conversation)
+        this.userService.saveUserEntity(user)
+        this.conversationService.saveConversationEntity(conversation)
         return conversation
     }
 
@@ -99,15 +101,15 @@ export class ChatService {
         let index = selectUser.conversations.findIndex(conversationItem => conversationItem.id === conversation.id)
         if (index !== -1) {
             selectUser.conversations.splice(index, 1)
-            this.userRepository.save(selectUser)
+            this.userService.saveUserEntity(selectUser)
         }
         index = conversation.chat.users.findIndex(userItem => userItem.id === selectUser.id)
         if (index !== -1) {
             conversation.chat.users.splice(index, 1)
-            this.conversationRepository.save(conversation)
+            this.conversationService.saveConversationEntity(conversation)
         }
         conversation.blackListUsers.push(selectUser)
-        this.conversationRepository.save(conversation)
+        this.conversationService.saveConversationEntity(conversation)
         return conversation
     }
 
@@ -125,8 +127,8 @@ export class ChatService {
         }
         selectUser.conversations.push(conversation)
         conversation.chat.users.push(selectUser)
-        this.conversationRepository.save(conversation)
-        this.userRepository.save(selectUser)
+        this.conversationService.saveConversationEntity(conversation)
+        this.userService.saveUserEntity(selectUser)
         return conversation
     }
 
@@ -141,7 +143,7 @@ export class ChatService {
         isNotAdmin = this.conversationService.isAdminConversation(user, conversation) === false
         if (isNotAdmin) {
             conversation.administrators.push(selectUser)
-            this.conversationRepository.save(conversation)
+            this.conversationService.saveConversationEntity(conversation)
         }
         return conversation
     }
@@ -163,17 +165,39 @@ export class ChatService {
         let index = conversation.administrators.findIndex(admin => admin.id === selectUser.id)
         if (index !== -1) {
             conversation.administrators.splice(index, 1)
-            this.conversationRepository.save(conversation)
+            this.conversationService.saveConversationEntity(conversation)
         }
         return conversation
     }
 
+    async findById(id: number): Promise<ChatEntity> {
+        return this.chatRespository.findOne(id, {
+            relations: ['users', 'messages']
+        })
+    }
+
+    async findAll(): Promise<ChatEntity[]> {
+        return this.chatRespository.find()
+    }
+
+    saveChatEntity(chat: ChatEntity): Promise<ChatEntity> {
+        return this.chatRespository.save(chat)
+    }
+
+    saveMessageEntity(message: MessageEntity): Promise<MessageEntity> {
+        return this.messageRepository.save(message)
+    }
+
+    deleteChatEntity(chat: ChatEntity) {
+        return this.chatRespository.delete(chat)
+    }
+
     getUserConversations(user: UserEntity): ChatType[] {
         const chats: ChatType[] = []
-        
+
         user.conversations.map(conversation => {
             chats.push({
-                id: conversation.id,
+                id: conversation.chat.id,
                 name: conversation.conversationName,
                 image: conversation.image,
                 numberOfMissed: 0,
@@ -189,12 +213,12 @@ export class ChatService {
 
         user.friends.map(friend => {
             chats.push({
-                id: friend.id,
-                name: friend.username,
-                image: friend.image,
+                id: friend.chat.id,
+                name: friend.profile.username,
+                image: friend.profile.image,
                 numberOfMissed: 0,
                 status: 'online',
-                type: this.userService.getTypeUser(user, friend)
+                type: this.userService.getTypeUser(user, friend.profile)
             })
         })
         return chats

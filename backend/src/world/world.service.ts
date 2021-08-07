@@ -8,12 +8,15 @@ import { ProfileSelectUserType } from 'src/user/types/profileSelectUser.type'
 import { ChatType } from 'src/chat/types/chat.type'
 import { UserService } from 'src/user/user.service'
 import { ConversationService } from 'src/conversation/conversation.service'
+import { FriendEntity } from 'src/user/friend.entity'
+import { ChatController } from 'src/chat/chat.controller'
+import { ChatEntity } from 'src/chat/chat.entity'
+import { ChatService } from 'src/chat/chat.service'
 
 @Injectable()
 export class WorldService {
     constructor(
-        @InjectRepository(UserEntity) private userRepository: Repository<UserEntity>,
-        @InjectRepository(ConversationEntity) private conversationRepository: Repository<ConversationEntity>,
+        private chatService: ChatService,
         private userService: UserService,
         private conversationService: ConversationService
     ) {}
@@ -83,8 +86,8 @@ export class WorldService {
     async enterConveration(user: UserEntity, conversation: ConversationEntity): Promise<void> {
         user.conversations.push(conversation)
         conversation.chat.users.push(user)
-        this.userRepository.save(user)
-        this.conversationRepository.save(conversation)
+        this.userService.saveUserEntity(user)
+        this.conversationService.saveConversationEntity(conversation)
     }
 
     async enterConversationWithAccessCode(user: UserEntity, conversation: ConversationEntity, accessCode: string): Promise<void> {
@@ -107,15 +110,18 @@ export class WorldService {
     }
 
     async addSelectUserToFriends(user: UserEntity, selectUser: UserEntity): Promise<void> {
-        const isFriend = user.friends.findIndex(friend => friend.id === selectUser.id) !== -1
+        const isFriend = user.friends.findIndex(friend => friend.profile.id === selectUser.id) !== -1
         const isBlackList = selectUser.blackListUsers.findIndex(userItem => userItem.id === user.id) !== -1
         if (isFriend || isBlackList) {
             return
         }
         const isSelectedUserSentRequest = user.friendInvitation.findIndex(userItem => userItem.id === selectUser.id) !== -1
         if (isSelectedUserSentRequest) {
-            user.friends.push(selectUser)
-            selectUser.friends.push(user)
+            let newChat = new ChatEntity()
+            newChat.users = [selectUser, user]
+            newChat = await this.chatService.saveChatEntity(newChat)
+            user.friends.push(await this.createFriend(selectUser, newChat))
+            selectUser.friends.push(await this.createFriend(user, newChat))
             let index = user.friendInvitation.findIndex(userItem => userItem.id === selectUser.id)
             user.friendInvitation.splice(index, 1)
             index = selectUser.myFriendshipRequests.findIndex(userItem => userItem.id === user.id)
@@ -124,25 +130,30 @@ export class WorldService {
             user.myFriendshipRequests.push(selectUser)
             selectUser.friendInvitation.push(user)
         }
-        this.userRepository.save(user)
-        this.userRepository.save(selectUser)
+        await this.userService.saveUserEntity(user)
+        await this.userService.saveUserEntity(selectUser)
     }
 
     async removeSelectUserAsFriends(user: UserEntity, selectUser: UserEntity): Promise<void> {
-        const isFriend = user.friends.findIndex(friend => friend.id === selectUser.id) !== -1
+        const isFriend = user.friends.findIndex(friend => friend.profile.id === selectUser.id) !== -1
         const isBlackList = selectUser.blackListUsers.findIndex(userItem => userItem.id === user.id) !== -1
         if (!isFriend || isBlackList) {
             return
         }
-        let index = user.friends.findIndex(userItem => userItem.id === selectUser.id)
+        let index = user.friends.findIndex(userItem => userItem.profile.id === selectUser.id)
         if (index !== -1) {
+            await this.userService.deleteFriendEntity(user.friends[index])
             user.friends.splice(index, 1)
-            this.userRepository.save(user)
+            this.userService.saveUserEntity(user)
         }
         index = selectUser.friends.findIndex(userItem => userItem.id === user.id)
         if (index !== -1) {
+            await this.userService.deleteFriendEntity(selectUser.friends[index])
             selectUser.friends.splice(index, 1)
-            this.userRepository.save(selectUser)
+            this.userService.saveUserEntity(selectUser)
+        }
+        if (index !== -1) {
+            this.chatService.deleteChatEntity(user.friends[index].chat)
         }
     }
 
@@ -154,12 +165,12 @@ export class WorldService {
         let index = user.friendInvitation.findIndex(userItem => userItem.id === selectUser.id)
         if (index !== -1) {
             user.friendInvitation.splice(index, 1)
-            this.userRepository.save(user)
+            this.userService.saveUserEntity(user)
         }
         index = selectUser.myFriendshipRequests.findIndex(userItem => userItem.id === user.id)
         if (index !== -1) {
             selectUser.myFriendshipRequests.splice(index, 1)
-            this.userRepository.save(selectUser)
+            this.userService.saveUserEntity(selectUser)
         }
     }
 
@@ -172,14 +183,14 @@ export class WorldService {
         this.rejectFriendshipRequest(user, selectUser)
         this.removeSelectUserAsFriends(user, selectUser)
         user.blackListUsers.push(selectUser)
-        this.userRepository.save(user)
+        this.userService.saveUserEntity(user)
     }
 
     async unblockedUser(user: UserEntity, selectUser: UserEntity): Promise<void> {
         let index = user.blackListUsers.findIndex(userItem => userItem.id === selectUser.id)
         if (index !== -1) {
             user.blackListUsers.splice(index, 1)
-            this.userRepository.save(user)
+            this.userService.saveUserEntity(user)
         }
     }
 
@@ -209,5 +220,13 @@ export class WorldService {
             throw new HttpException("You don't have access!", HttpStatus.FORBIDDEN)
         }
         selectUser.position = 'User'
+    }
+
+    async createFriend(selectUser: UserEntity, chat: ChatEntity): Promise<FriendEntity> {
+        const friend = new FriendEntity()
+
+        friend.profile = selectUser
+        friend.chat = chat
+        return this.userService.saveFriendEntity(friend)
     }
 }
