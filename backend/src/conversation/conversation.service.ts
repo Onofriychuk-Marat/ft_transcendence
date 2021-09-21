@@ -63,7 +63,7 @@ export class ConversationService {
     async findById(conversationID: number): Promise<ConversationEntity> {
         return await this.conversationReposity.findOne(conversationID, {
             relations: ['mainAdministrator', 'blackListUsers',
-            'administrators', 'chat']
+            'administrators', 'chat', 'chat.users']
         })
     }
 
