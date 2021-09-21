@@ -1,5 +1,9 @@
 <template>
   <div class="chat">
+  <button
+        class="btn"
+        @click="initUser"
+    >Init</button>
     <div class="chat-users collection">
         <a
           class="collection-item"
@@ -71,6 +75,16 @@ export default {
     }
   },
   methods: {
+        initUser() {
+          this.$socket.emit('init', this.jwt)
+          this.sockets.subscribe('init', response => {
+            console.log('INIT')
+            if (response.status === 'success' && this.flagInit === false) {
+              this.flagInit = true
+              this.initializeConnection()
+            }
+          })
+        },
         entrance() {
           this.getConversations()
           this.getProfile()
@@ -81,6 +95,7 @@ export default {
             jwt: this.jwt,
             chatId: conversation.id
           })
+          console.log('join in chat: ', conversation.id);
         },
         joinInChat() {
           if (this.chatId === '' || this.jwt === '') {
@@ -94,12 +109,17 @@ export default {
           this.getProfile()
         },
         sendMessage() {
-          if (this.validateInput() === false || this.chatId === '' || this.jwt === '') {
+          console.log('sendMessage')
+          console.log(this.validateInput() === false)
+          console.log(this.selectChat === '')
+          console.log(this.jwt === '')
+          if (this.validateInput() === false || this.selectChat === '' || this.jwt === '') {
             return;
           }
+          console.log('go sendMessage')
           const message = {
             userId: this.profile.id,
-            chatId: this.chatId,
+            chatId: this.selectChat,
             text: this.text
           }
           this.$socket.emit('msgToServer', message)
@@ -123,6 +143,7 @@ export default {
             })
           })
           this.sockets.subscribe('msgToClient', message => {
+            console.log('msgToClient: ', message)
             this.messages.push(message.text)
           })
         },
@@ -146,10 +167,14 @@ export default {
               'Authorization': 'Token ' + this.jwt
             }
           }).then(response => {
+            console.log('>>>> ', response)
+            this.conversations = []
             response.data.chats.map(conversation => {
               this.conversations.push(conversation)
             })
             console.log(this.conversations[0])
+          }).catch(error => {
+            console.log('error: ', error)
           })
         }
     },
@@ -162,17 +187,18 @@ export default {
       },
   },
   created() {
-    this.$socket.emit('init', this.jwt)
-    this.sockets.subscribe('init', response => {
-      // console.log('INIT', status)
-      if (response.status === 'success' && this.flagInit === false) {
-        this.flagInit = true
-        this.initializeConnection()
-      }
-    })
 
   },
-  mounted() {},
+  mounted() {
+    // this.$socket.emit('init', this.jwt)
+    // this.sockets.subscribe('init', response => {
+    //   console.log('INIT')
+    //   if (response.status === 'success' && this.flagInit === false) {
+    //     this.flagInit = true
+    //     this.initializeConnection()
+    //   }
+    // })
+  },
   components: {}
 }
 </script>

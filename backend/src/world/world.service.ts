@@ -85,9 +85,13 @@ export class WorldService {
 
     async enterConveration(user: UserEntity, conversation: ConversationEntity): Promise<void> {
         user.conversations.push(conversation)
-        conversation.chat.users.push(user)
+        // conversation.chat.users.push(user)
+        const chat = await this.chatService.findById(conversation.chat.id);
+        chat.users.push(user)
+
         this.userService.saveUserEntity(user)
-        this.conversationService.saveConversationEntity(conversation)
+        console.log('enterConversation: ', await this.chatService.saveChatEntity(chat))
+        // this.conversationService.saveConversationEntity(conversation)
     }
 
     async enterConversationWithAccessCode(user: UserEntity, conversation: ConversationEntity, accessCode: string): Promise<void> {
