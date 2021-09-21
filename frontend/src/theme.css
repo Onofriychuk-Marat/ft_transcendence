@@ -1,0 +1,39 @@
+body {
+    background: #202020;
+    font-family: UnicaOne;
+
+}
+
+.input:hover {
+    background-color: #474747;
+}
+ 
+.input:hover::-webkit-input-placeholder {
+    color:rgb(189, 188, 188);
+}
+
+.input {
+    background-color: #202020;
+    color: rgb(189, 188, 188);
+
+    font-family: UnicaOne;
+    font-style: normal;
+    font-weight: normal;
+
+    align-items: center;
+    text-align: center;
+    letter-spacing: -0.03em;
+    
+    border: 1.5px solid #968686;
+    outline: none;
+    display: block;
+}
+
+@font-face {
+    /* // название шрифта(чтобы не запутаться лучше указать название папки со шрифтом)  */
+    font-family: "UnicaOne"; 
+    /* // адрес шрифта и тип  */
+    src: url("../UnicaOne-Regular.ttf") format("truetype"); 
+    font-style: normal; 
+    font-weight: normal; 
+} 
