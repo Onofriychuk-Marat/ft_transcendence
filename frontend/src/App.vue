@@ -2,12 +2,22 @@
   <div class="chat">
     <div class="chat-users collection">
         <a
-            class="collection-item"
-            v-for="conversation in conversations"
-            @click="clickConversation(conversation)"
-        >
+          class="collection-item"
+          v-for="conversation in conversations"
+          @click="clickConversation(conversation)"
+          v-bind:key="conversation">
             {{conversation.name}}
         </a>
+        <div class="input-field">
+          <input
+              type="text"
+              placeholder="jwt"
+              v-model.trim="jwt"
+              autofocus
+              autocomplete="false"
+              @keydown.enter="entrance"
+          >
+        </div>
     </div>
             <div class="chat-messages" ref="messages">
             <!-- <chat-message
@@ -50,7 +60,8 @@ export default {
       title: 'Nestjs Websockets Chat',
       name: '',
       text: '',
-      jwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJtYXJhdCIsImlhdCI6MTYyODA0MDQ5NX0.FzyzeSYGnNI5cYLvF9btkzvLdlO-cK0GOEGJ61iRnVE',
+      chatId: '',
+      jwt: '',
       messages: [],
       socket: null,
       conversations: [],
@@ -60,6 +71,10 @@ export default {
     }
   },
   methods: {
+        entrance() {
+          this.getConversations()
+          this.getProfile()
+        },
         clickConversation(conversation) {
           this.selectChat = conversation.id
           this.$socket.emit('joinInChat', {
@@ -67,16 +82,28 @@ export default {
             chatId: conversation.id
           })
         },
+        joinInChat() {
+          if (this.chatId === '' || this.jwt === '') {
+            return;
+          }
+          this.$socket.emit('joinInChat', {
+            jwt: this.jwt,
+            chatId: this.chatId
+          })
+          this.getConversations()
+          this.getProfile()
+        },
         sendMessage() {
-            if(this.validateInput() && this.selectChat && this.profile) {
-                const message = {
-                    userId: this.profile.id,
-                    chatId: this.selectChat,
-                    text: this.text
-                }
-                this.$socket.emit('msgToServer', message)
-                this.text = ''
-            }
+          if (this.validateInput() === false || this.chatId === '' || this.jwt === '') {
+            return;
+          }
+          const message = {
+            userId: this.profile.id,
+            chatId: this.chatId,
+            text: this.text
+          }
+          this.$socket.emit('msgToServer', message)
+          this.text = ''
         },
         receivedMessage(message) {
             this.messages.push(message)
@@ -94,10 +121,35 @@ export default {
             chat.messages.map(message => {
               this.messages.push(message.text)
             })
-            
           })
           this.sockets.subscribe('msgToClient', message => {
             this.messages.push(message.text)
+          })
+        },
+        getProfile() {
+          axios('/api/user/profile', {
+          method: 'get',
+          headers: {
+              'Authorization': 'Token ' + this.jwt
+            }
+          }).then(response => {
+            this.profile = response.data.profile
+            console.log('profile', this.profile)
+          }).catch(error => {
+            console.log('error send /api/user/profile', error)
+          })
+        },
+        getConversations() {
+          axios('/api/chats/conversations', {
+          method: 'get',
+          headers: {
+              'Authorization': 'Token ' + this.jwt
+            }
+          }).then(response => {
+            response.data.chats.map(conversation => {
+              this.conversations.push(conversation)
+            })
+            console.log(this.conversations[0])
           })
         }
     },
@@ -108,7 +160,6 @@ export default {
       customEmit: function (data) {
           console.log('this method was fired by the socket server. eg: io.emit("customEmit", data)' + data)
       },
-    
   },
   created() {
     this.$socket.emit('init', this.jwt)
@@ -120,28 +171,6 @@ export default {
       }
     })
 
-    axios('/api/chats/conversations', {
-      method: 'get',
-      headers: {
-        'Authorization': 'Token ' + this.jwt
-      }
-    }).then(response => {
-      response.data.chats.map(conversation => {
-        this.conversations.push(conversation)
-      })
-      console.log(this.conversations[0])
-    })
-
-    axios('/api/user/profile', {
-      method: 'get',
-      headers: {
-        'Authorization': 'Token ' + this.jwt
-      }
-    }).then(response => {
-      this.profile = response.data.profile
-      console.log('profile', this.profile)
-    })
-    
   },
   mounted() {},
   components: {}

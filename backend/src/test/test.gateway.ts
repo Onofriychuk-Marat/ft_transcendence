@@ -8,9 +8,9 @@ import {
   } from '@nestjs/websockets';
   import { Logger } from '@nestjs/common';
   import { Socket, Server } from 'socket.io';
-  import { InjectRepository } from '@nestjs/typeorm'
+  import { InjectRepository } from '@nestjs/typeorm';
 import { ConversationEntity } from 'src/conversation/conversation.entity';
-import { verify } from 'jsonwebtoken'
+import { verify } from 'jsonwebtoken';
 import { JWT_SECRET } from 'src/ormconfig';
 import { UserService } from 'src/user/user.service';
 import { UserEntity } from 'src/user/user.entity';
@@ -18,7 +18,7 @@ import { User } from 'src/user/decorators/user.decorator';
 import { ChatEntity } from 'src/chat/chat.entity';
 import { ChatService } from 'src/chat/chat.service';
 import { MessageEntity } from 'src/chat/message.entity';
-import { Repository } from 'typeorm'
+import { Repository } from 'typeorm';
 
 @WebSocketGateway()
 export class TestGateway
